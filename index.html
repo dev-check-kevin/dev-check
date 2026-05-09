@@ -3193,7 +3193,7 @@ window.addEventListener('popstate', () => {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') { alert('請允許推播通知權限'); return; }
 
-      const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
 
       // 等待 Service Worker 完全激活
       await new Promise(resolve => {
