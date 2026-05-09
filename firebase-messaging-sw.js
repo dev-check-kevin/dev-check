@@ -1,6 +1,10 @@
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js');
 
+// 新版本安裝後立即取代舊版本，避免兩個 SW 同時運行
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+
 const firebaseConfig = {
   apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ",
   authDomain: "etf-analysis-master.firebaseapp.com",
