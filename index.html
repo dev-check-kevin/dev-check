@@ -3261,7 +3261,8 @@ window.addEventListener('popstate', () => {
 
   // 前台收到訊息時顯示 toast（後台由 Service Worker 顯示系統通知）
   onMessage(messaging, (payload) => {
-    const { title, body } = payload.notification || {};
+    const title = payload.data?.title || payload.notification?.title;
+    const body = payload.data?.body || payload.notification?.body;
     showToast(title, body);
   });
 </script>

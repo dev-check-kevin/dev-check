@@ -17,9 +17,9 @@ const messaging = firebase.messaging();
 
 // 只在應用背景時觸發（前台由 onMessage 處理）
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.notification?.title || 'ETF 通知';
+  const notificationTitle = payload.data?.title || 'ETF 通知';
   const notificationOptions = {
-    body: payload.notification?.body || '',
+    body: payload.data?.body || '',
     icon: '/favicon.png',
     tag: 'etf-notification',
   };
