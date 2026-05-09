@@ -3185,6 +3185,10 @@ window.addEventListener('popstate', () => {
   updateBtnState(isSubscribed());
 
   async function subscribe() {
+    if (!currentUser) {
+      alert('請先登入才能訂閱推播通知');
+      return;
+    }
     if (!('serviceWorker' in navigator)) {
       alert('此瀏覽器不支援推播通知');
       return;
@@ -3214,6 +3218,7 @@ window.addEventListener('popstate', () => {
 
       await setDoc(doc(db, 'fcmTokens', token), {
         token,
+        userId: currentUser.uid,
         createdAt: serverTimestamp(),
         ua: navigator.userAgent.slice(0, 200),
       });
@@ -3237,10 +3242,7 @@ window.addEventListener('popstate', () => {
     else subscribe();
   });
 
-  onMessage(messaging, (payload) => {
-    const { title, body } = payload.notification || {};
-    console.log('[FCM] Foreground message:', title, body);
-    // 在頁面上顯示 toast 通知
+  function showToast(title, body) {
     const toast = document.createElement('div');
     toast.style.cssText = `
       position: fixed; bottom: 20px; right: 20px; z-index: 9999;
@@ -3251,6 +3253,22 @@ window.addEventListener('popstate', () => {
     toast.textContent = `${title}: ${body}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 6000);
+  }
+
+  // 監聽來自 Service Worker 的訊息
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'FCM_MESSAGE') {
+        console.log('[FCM] Message from SW:', event.data);
+        showToast(event.data.title, event.data.body);
+      }
+    });
+  }
+
+  onMessage(messaging, (payload) => {
+    const { title, body } = payload.notification || {};
+    console.log('[FCM] Foreground message:', title, body);
+    showToast(title, body);
   });
 </script>
 </body>
