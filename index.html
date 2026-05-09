@@ -3259,19 +3259,9 @@ window.addEventListener('popstate', () => {
     setTimeout(() => toast.remove(), 6000);
   }
 
-  // 監聽來自 Service Worker 的訊息
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data.type === 'FCM_MESSAGE') {
-        console.log('[FCM] Message from SW:', event.data);
-        showToast(event.data.title, event.data.body);
-      }
-    });
-  }
-
+  // 前台收到訊息時顯示 toast（後台由 Service Worker 顯示系統通知）
   onMessage(messaging, (payload) => {
     const { title, body } = payload.notification || {};
-    console.log('[FCM] Foreground message:', title, body);
     showToast(title, body);
   });
 </script>

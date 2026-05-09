@@ -14,18 +14,13 @@ firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
+// 只在應用背景時觸發（前台由 onMessage 處理）
 messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] Message received:', payload);
   const notificationTitle = payload.notification?.title || 'ETF 通知';
   const notificationOptions = {
     body: payload.notification?.body || '',
     icon: '/favicon.png',
-    badge: '/favicon.png',
     tag: 'etf-notification',
-    requireInteraction: false,
   };
-  console.log('[SW] Showing notification:', notificationTitle, notificationOptions);
-  return self.registration.showNotification(notificationTitle, notificationOptions).catch(err => {
-    console.error('[SW] showNotification failed:', err);
-  });
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
