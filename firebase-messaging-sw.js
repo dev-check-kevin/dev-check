@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.data?.title || 'ETF 通知';
   const notificationOptions = {
     body: payload.data?.body || '',
-    icon: '/favicon.png',
+    icon: self.registration.scope + 'favicon.png',
     tag: 'etf-notification',
   };
   return self.registration.showNotification(notificationTitle, notificationOptions);
