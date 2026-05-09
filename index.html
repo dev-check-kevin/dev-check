@@ -3219,10 +3219,11 @@ window.addEventListener('popstate', () => {
       const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
       if (!token) { alert('無法取得推播 token，請稍後再試'); return; }
 
-      await setDoc(doc(db, 'fcmTokens', token), {
+      const userId = window._etfAuth.user.uid;
+      await setDoc(doc(db, 'fcmTokens', userId), {
         token,
-        userId: window._etfAuth.user.uid,
-        createdAt: serverTimestamp(),
+        userId,
+        updatedAt: serverTimestamp(),
         ua: navigator.userAgent.slice(0, 200),
       });
       localStorage.setItem('fcm_subscribed', '1');
