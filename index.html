@@ -3185,7 +3185,7 @@ window.addEventListener('popstate', () => {
   updateBtnState(isSubscribed());
 
   async function subscribe() {
-    if (!currentUser) {
+    if (!window._etfAuth?.user) {
       alert('請先登入才能訂閱推播通知');
       return;
     }
@@ -3218,7 +3218,7 @@ window.addEventListener('popstate', () => {
 
       await setDoc(doc(db, 'fcmTokens', token), {
         token,
-        userId: currentUser.uid,
+        userId: window._etfAuth.user.uid,
         createdAt: serverTimestamp(),
         ua: navigator.userAgent.slice(0, 200),
       });
