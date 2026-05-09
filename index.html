@@ -3194,8 +3194,11 @@ window.addEventListener('popstate', () => {
       return;
     }
     try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') { alert('請允許推播通知權限'); return; }
+      // 桌面瀏覽器才需要 Notification 權限
+      if ('Notification' in window && Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') { alert('請允許推播通知權限'); return; }
+      }
 
       const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
 
