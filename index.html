@@ -3220,9 +3220,11 @@ window.addEventListener('popstate', () => {
       if (!token) { alert('無法取得推播 token，請稍後再試'); return; }
 
       const userId = window._etfAuth.user.uid;
+      const email = window._etfAuth.user.email || '';
       await setDoc(doc(db, 'fcmTokens', token), {
         token,
         userId,
+        email,
         updatedAt: serverTimestamp(),
         ua: navigator.userAgent.slice(0, 200),
       });
