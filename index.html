@@ -120,6 +120,25 @@
     border-bottom-color: var(--accent);
   }
 
+  @media (max-width: 640px) {
+    .tab-nav {
+      padding: 0 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 0;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 12px 12px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .auth-area { flex-shrink: 0; }
+    #authArea { padding: 6px 4px 6px 2px; }
+    .user-name { max-width: 72px; }
+  }
+
   /* ── Layout ── */
   .container {
     max-width: 1400px;
@@ -2567,7 +2586,7 @@ const STOCK_NAME = {};
 const STOCK_INDUSTRY = {};
 STOCK_LIST.forEach(([c, n, ind]) => { STOCK_NAME[c] = n; STOCK_INDUSTRY[c] = ind || ''; });
 
-let myPortfolio = new Set(JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || '[]'));
+let myPortfolio = new Set();
 
 function savePortfolio() {
   localStorage.setItem(PORTFOLIO_KEY, JSON.stringify([...myPortfolio]));
@@ -3171,6 +3190,11 @@ if (HISTORY_DATA.length > 0) {
     }
     else      {
       renderLoggedOut();
+      myPortfolio = new Set(JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || '[]'));
+      renderETFCards();
+      restoreCardActiveStates();
+      renderTable();
+      renderUniqueTable();
     }
     updateInputArea(user);
     openCombinedModal(user);
