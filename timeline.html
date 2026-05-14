@@ -810,20 +810,10 @@
   .history-wall-section .section-title {
     margin-bottom: 16px;
   }
-  .wall-stream-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    padding-left: 2px;
-  }
-  .wall-stream-add { color: var(--green); }
-  .wall-stream-rem { color: var(--red); }
-  .wall-stream-sep {
+  .wall-inner-sep {
     border: none;
-    border-top: 1px solid var(--border2);
-    margin: 14px 0;
+    border-top: 1px solid var(--border);
+    margin: 14px 0 10px;
   }
   .wall-no-change {
     font-size: 11px;
@@ -860,7 +850,10 @@
     border: 1px solid var(--border2);
     border-radius: var(--radius);
     padding: 12px;
+    display: grid;
+    grid-template-rows: auto 1fr auto 1fr;
   }
+  .wall-add-section, .wall-rem-section { min-height: 0; }
 
   .wall-group-date {
     padding: 4px 0 12px;
@@ -1849,11 +1842,7 @@
 <div class="history-page-wrap">
   <div class="history-wall-section">
     <div class="section-title">動態牆</div>
-    <div class="wall-stream-label wall-stream-add">▲ 新增入列</div>
-    <div id="historyWallAdd" class="history-wall-h"></div>
-    <hr class="wall-stream-sep">
-    <div class="wall-stream-label wall-stream-rem">▼ 移出持倉</div>
-    <div id="historyWallRem" class="history-wall-h"></div>
+    <div id="historyWall" class="history-wall-h"></div>
   </div>
 </div>
 </div><!-- end page-timelineurl -->
@@ -2299,11 +2288,10 @@ document.getElementById('search').addEventListener('input', renderTable);
 let activeHistoryETF = HISTORY_DATA[0]?.ticker || '';
 
 function renderHistoryWall() {
-  const addEl = document.getElementById('historyWallAdd');
-  const remEl = document.getElementById('historyWallRem');
-  if (!addEl || !remEl) return;
+  const container = document.getElementById('historyWall');
+  if (!container) return;
   if (!WALL_DATA.length) {
-    addEl.innerHTML = remEl.innerHTML = '<div class="wall-empty">暫無資料</div>';
+    container.innerHTML = '<div class="wall-empty">暫無新增/移出紀錄</div>';
     return;
   }
 
@@ -2324,7 +2312,18 @@ function renderHistoryWall() {
         : ''}
     </div>`;
 
-  const renderGroup = (g, stocks, cardClass, sign, sharesClass, emptyMsg) => `
+  const renderSection = (stocks, cardClass, sign, sharesClass, labelClass, label, emptyMsg) => `
+    <div class="wall-section-label ${labelClass}">${label}</div>
+    ${stocks.length ? stocks.map(s => `
+      <div class="wall-stock-card ${cardClass}">
+        <div class="wall-stock-header">
+          <a class="stock-link wall-stock-name" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.name}</a>
+          <a class="stock-link wall-stock-ticker" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.ticker}</a>
+        </div>
+        ${s.etfs.map(e => renderEtfRow(e, sign, sharesClass)).join('')}
+      </div>`).join('') : `<div class="wall-no-change">${emptyMsg}</div>`}`;
+
+  container.innerHTML = [...WALL_DATA].reverse().map(g => `
     <div class="wall-group">
       <div class="wall-group-date">
         <div class="wgd-range">
@@ -2334,25 +2333,16 @@ function renderHistoryWall() {
         </div>
         <div class="wgd-dow">${wallDow(g.to_label)}</div>
       </div>
-      ${stocks.length ? stocks.map(s => `
-        <div class="wall-stock-card ${cardClass}">
-          <div class="wall-stock-header">
-            <a class="stock-link wall-stock-name" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.name}</a>
-            <a class="stock-link wall-stock-ticker" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.ticker}</a>
-          </div>
-          ${s.etfs.map(e => renderEtfRow(e, sign, sharesClass)).join('')}
-        </div>`).join('') : `<div class="wall-no-change">${emptyMsg}</div>`}
-    </div>`;
-
-  const reversed = [...WALL_DATA].reverse();
-  addEl.innerHTML = reversed.map(g => renderGroup(g, g.added_stocks, 'wall-stock-card-add', '+', 'wall-shares-add', '今日無新增')).join('');
-  remEl.innerHTML = reversed.map(g => renderGroup(g, g.removed_stocks, 'wall-stock-card-rem', '−', 'wall-shares-rem', '今日無移出')).join('');
-  addEl.scrollLeft = addEl.scrollWidth;
-  remEl.scrollLeft = remEl.scrollWidth;
-
-  let _syncing = false;
-  addEl.addEventListener('scroll', () => { if (!_syncing) { _syncing = true; remEl.scrollLeft = addEl.scrollLeft; _syncing = false; } });
-  remEl.addEventListener('scroll', () => { if (!_syncing) { _syncing = true; addEl.scrollLeft = remEl.scrollLeft; _syncing = false; } });
+      <div class="wall-add-section">
+        ${renderSection(g.added_stocks,   'wall-stock-card-add', '+', 'wall-shares-add', 'wall-add-label', '▲ 新增入列', '今日無新增')}
+      </div>
+      <hr class="wall-inner-sep">
+      <div class="wall-rem-section">
+        ${renderSection(g.removed_stocks, 'wall-stock-card-rem', '−', 'wall-shares-rem', 'wall-rem-label', '▼ 移出持倉', '今日無移出')}
+      </div>
+    </div>
+  `).join('');
+  container.scrollLeft = container.scrollWidth;
 }
 
 function renderHistoryETFTabs() {
