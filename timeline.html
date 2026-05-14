@@ -808,7 +808,28 @@
     padding: 16px 16px 10px;
   }
   .history-wall-section .section-title {
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .wall-stream-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .wall-stream-add { color: var(--green); }
+  .wall-stream-rem { color: var(--red); }
+  .wall-stream-sep {
+    border: none;
+    border-top: 1px solid var(--border2);
+    margin: 14px 0;
+  }
+  .wall-no-change {
+    font-size: 11px;
+    color: var(--text3);
+    padding: 8px 4px;
+    text-align: center;
   }
   .history-wall-h {
     display: flex;
@@ -834,7 +855,7 @@
   }
   .wall-group {
     flex-shrink: 0;
-    min-width: 180px;
+    width: 350px;
     background: var(--bg3);
     border: 1px solid var(--border2);
     border-radius: var(--radius);
@@ -842,15 +863,28 @@
   }
 
   .wall-group-date {
+    padding: 4px 0 12px;
+    letter-spacing: 0.5px;
+  }
+  .wgd-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--mono);
     font-size: 14px;
     font-weight: 700;
     color: var(--text);
-    padding: 4px 0 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    letter-spacing: 0.5px;
+  }
+  .wgd-from {
+    color: var(--text3);
+    font-weight: 400;
+  }
+  .wgd-dow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 3px;
+    letter-spacing: 1px;
   }
   .wall-group-date .arrow { color: var(--text3); font-weight: 400; }
 
@@ -1815,7 +1849,11 @@
 <div class="history-page-wrap">
   <div class="history-wall-section">
     <div class="section-title">動態牆</div>
-    <div id="historyWall" class="history-wall-h"></div>
+    <div class="wall-stream-label wall-stream-add">▲ 新增入列</div>
+    <div id="historyWallAdd" class="history-wall-h"></div>
+    <hr class="wall-stream-sep">
+    <div class="wall-stream-label wall-stream-rem">▼ 移出持倉</div>
+    <div id="historyWallRem" class="history-wall-h"></div>
   </div>
 </div>
 </div><!-- end page-timelineurl -->
@@ -2261,12 +2299,20 @@ document.getElementById('search').addEventListener('input', renderTable);
 let activeHistoryETF = HISTORY_DATA[0]?.ticker || '';
 
 function renderHistoryWall() {
-  const container = document.getElementById('historyWall');
-  if (!container) return;
+  const addEl = document.getElementById('historyWallAdd');
+  const remEl = document.getElementById('historyWallRem');
+  if (!addEl || !remEl) return;
   if (!WALL_DATA.length) {
-    container.innerHTML = '<div class="wall-empty">暫無新增/移出紀錄</div>';
+    addEl.innerHTML = remEl.innerHTML = '<div class="wall-empty">暫無資料</div>';
     return;
   }
+
+  const DOW = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const yr = new Date().getFullYear();
+  const wallDow = label => {
+    const [m, d] = label.split('/').map(Number);
+    return DOW[new Date(yr, m - 1, d).getDay()];
+  };
 
   const renderEtfRow = (e, sign, sharesClass) => `
     <div class="wall-etf-row" style="--wc:${e.color}">
@@ -2278,32 +2324,35 @@ function renderHistoryWall() {
         : ''}
     </div>`;
 
-  const renderCards = (stocks, cardClass, sign, sharesClass, sectionClass, sectionLabel) => {
-    if (!stocks.length) return '';
-    return `
-      <div class="wall-section-label ${sectionClass}">${sectionLabel}</div>
-      ${stocks.map(s => `
+  const renderGroup = (g, stocks, cardClass, sign, sharesClass, emptyMsg) => `
+    <div class="wall-group">
+      <div class="wall-group-date">
+        <div class="wgd-range">
+          <span class="wgd-from">${g.from_label}</span>
+          <span class="arrow">→</span>
+          <span>${g.to_label}</span>
+        </div>
+        <div class="wgd-dow">${wallDow(g.to_label)}</div>
+      </div>
+      ${stocks.length ? stocks.map(s => `
         <div class="wall-stock-card ${cardClass}">
           <div class="wall-stock-header">
             <a class="stock-link wall-stock-name" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.name}</a>
             <a class="stock-link wall-stock-ticker" href="https://www.wantgoo.com/stock/${s.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${s.ticker}</a>
           </div>
           ${s.etfs.map(e => renderEtfRow(e, sign, sharesClass)).join('')}
-        </div>`).join('')}`;
-  };
+        </div>`).join('') : `<div class="wall-no-change">${emptyMsg}</div>`}
+    </div>`;
 
-  container.innerHTML = [...WALL_DATA].reverse().map(g => `
-    <div class="wall-group">
-      <div class="wall-group-date">
-        <span>${g.from_label}</span>
-        <span class="arrow">→</span>
-        <span>${g.to_label}</span>
-      </div>
-      ${renderCards(g.added_stocks,   'wall-stock-card-add', '+', 'wall-shares-add', 'wall-add-label', '▲ 新增入列')}
-      ${renderCards(g.removed_stocks, 'wall-stock-card-rem', '−', 'wall-shares-rem', 'wall-rem-label', '▼ 移出持倉')}
-    </div>
-  `).join('');
-  container.scrollLeft = container.scrollWidth;
+  const reversed = [...WALL_DATA].reverse();
+  addEl.innerHTML = reversed.map(g => renderGroup(g, g.added_stocks, 'wall-stock-card-add', '+', 'wall-shares-add', '今日無新增')).join('');
+  remEl.innerHTML = reversed.map(g => renderGroup(g, g.removed_stocks, 'wall-stock-card-rem', '−', 'wall-shares-rem', '今日無移出')).join('');
+  addEl.scrollLeft = addEl.scrollWidth;
+  remEl.scrollLeft = remEl.scrollWidth;
+
+  let _syncing = false;
+  addEl.addEventListener('scroll', () => { if (!_syncing) { _syncing = true; remEl.scrollLeft = addEl.scrollLeft; _syncing = false; } });
+  remEl.addEventListener('scroll', () => { if (!_syncing) { _syncing = true; addEl.scrollLeft = remEl.scrollLeft; _syncing = false; } });
 }
 
 function renderHistoryETFTabs() {
