@@ -1041,14 +1041,53 @@
     min-width: 0;
   }
 
+  /* 日期控制按鈕 */
+  .weight-date-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .weight-scroll-btn {
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .weight-scroll-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg2));
+  }
+  .weight-scroll-btn:active {
+    background: color-mix(in srgb, var(--accent) 20%, var(--bg2));
+  }
+
   /* 日期 button row (shifting 頁同時控制共識區 + ETF 異動歷史) */
   .weight-date-row {
     display: flex;
-    flex-wrap: wrap;
     gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
     margin-bottom: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
+  .weight-date-row::-webkit-scrollbar { height: 4px; }
+  .weight-date-row::-webkit-scrollbar-track { background: transparent; }
+  .weight-date-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .weight-date-btn {
+    flex-shrink: 0;
     font-family: var(--mono);
     font-size: 13px;
     font-weight: 600;
@@ -2040,6 +2079,12 @@
   <!-- ETF 產業權重輪動標題 -->
   <div class="section-title" style="margin-bottom:8px">ETF 產業權重輪動</div>
 
+  <!-- 日期 button row 控制按鈕 -->
+  <div class="weight-date-controls">
+    <button class="weight-scroll-btn weight-scroll-left" onclick="scrollWeightDateRow('left')" title="向左滾動">‹</button>
+    <button class="weight-scroll-btn weight-scroll-right" onclick="scrollWeightDateRow('right')" title="向右滾動">›</button>
+  </div>
+
   <!-- 日期 button row: 同時控制下方共識視圖與 ETF 異動歷史 -->
   <div class="weight-date-row" id="weightDateRow"></div>
 
@@ -2582,11 +2627,42 @@ function _changeMatchesActiveDate(change) {
 function renderWeightDateRow() {
   const container = document.getElementById('weightDateRow');
   if (!container) return;
-  const visibleDates = WEIGHT_ANALYSIS_DATES;
+  const visibleDates = [...WEIGHT_ANALYSIS_DATES].reverse();
   container.innerHTML = visibleDates.map(d => `
     <button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}"
             onclick="selectWeightDate('${d}')">${d}</button>
   `).join('');
+  requestAnimationFrame(() => {
+    _centerWeightDateRow();
+  });
+}
+
+function _centerWeightDateRow() {
+  const container = document.getElementById('weightDateRow');
+  if (!container) return;
+  const activeBtn = container.querySelector('.weight-date-btn.active');
+  if (!activeBtn) return;
+  const containerRect = container.getBoundingClientRect();
+  const btnRect = activeBtn.getBoundingClientRect();
+  const btnCenter = container.scrollLeft + btnRect.left - containerRect.left + btnRect.width / 2;
+  container.scrollLeft = Math.max(0, btnCenter - container.clientWidth / 2);
+}
+
+function scrollWeightDateRow(direction) {
+  const visibleDates = [...WEIGHT_ANALYSIS_DATES].reverse();
+  const currentIndex = visibleDates.indexOf(activeWeightDate);
+  if (currentIndex === -1) return;
+
+  let nextIndex = currentIndex;
+  if (direction === 'left' && currentIndex > 0) {
+    nextIndex = currentIndex - 1;
+  } else if (direction === 'right' && currentIndex < visibleDates.length - 1) {
+    nextIndex = currentIndex + 1;
+  }
+
+  if (nextIndex !== currentIndex) {
+    selectWeightDate(visibleDates[nextIndex]);
+  }
 }
 
 function selectWeightDate(date) {
