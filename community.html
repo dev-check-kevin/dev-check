@@ -13,6 +13,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
 <link rel="canonical" href="https://etfcross.com/community" />
+<link rel="manifest" href="/manifest.json">
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
 <title>使用者反饋與筆記｜ETF Cross</title>
@@ -1072,6 +1073,30 @@
   .weight-scroll-btn:active {
     background: color-mix(in srgb, var(--accent) 20%, var(--bg2));
   }
+  .notify-push-btn {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .notify-push-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg2));
+  }
+  .notify-push-btn.subscribed {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg2));
+  }
 
   /* 日期 button row (shifting 頁同時控制共識區 + ETF 異動歷史) */
   .weight-date-row {
@@ -2083,6 +2108,7 @@
   <div class="weight-date-controls">
     <button class="weight-scroll-btn weight-scroll-left" onclick="scrollWeightDateRow('left')" title="向左滾動">‹</button>
     <button class="weight-scroll-btn weight-scroll-right" onclick="scrollWeightDateRow('right')" title="向右滾動">›</button>
+    <button id="notifyPushBtn" class="notify-push-btn" title="訂閱 ETF 共識推播通知">開啟共識通知</button>
   </div>
 
   <!-- 日期 button row: 同時控制下方共識視圖與 ETF 異動歷史 -->
@@ -3662,6 +3688,100 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   });
 
   initCombinedModal();
+</script>
+
+<!-- ── FCM Web Push ── -->
+<script type="module">
+  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging.js";
+  import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  const VAPID_KEY = "BIqE0amP-OOTHyWSodtMP000ZDFn8pkNOQRtNJmQQE5V0J1iiHL-WGqkljWvlINHDlflNfOTgZjDSm17T4Ip-Ss";
+  const LS_SUBSCRIBED = 'fcm_subscribed';
+  const LS_TOKEN      = 'fcm_token';
+
+  const app       = getApps().length ? getApps()[0] : initializeApp({ apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ", authDomain: "etf-analysis-master.firebaseapp.com", projectId: "etf-analysis-master", storageBucket: "etf-analysis-master.firebasestorage.app", messagingSenderId: "447309961676", appId: "1:447309961676:web:5f665d92457d471350e569" });
+  const messaging = getMessaging(app);
+  const db        = getFirestore(app);
+  const btn       = document.getElementById('notifyPushBtn');
+
+  function isSubscribed() { return localStorage.getItem(LS_SUBSCRIBED) === '1'; }
+
+  function updateBtn(subscribed) {
+    btn.innerHTML = subscribed
+      ? '<span style="color:#facc15;font-size:14px">🔔</span> 當日共識通知已開啟'
+      : '<span style="font-size:14px">🔔</span> 開啟當日共識通知';
+    btn.classList.toggle('subscribed', subscribed);
+    btn.title = subscribed ? '點擊取消共識推播通知' : '訂閱 ETF 共識推播通知';
+  }
+
+  updateBtn(isSubscribed());
+
+  async function subscribe() {
+    if (!window._etfAuth?.user) {
+      alert('請先登入才能開啟共識通知');
+      return;
+    }
+    if (!('serviceWorker' in navigator)) {
+      alert('此瀏覽器不支援推播通知');
+      return;
+    }
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { alert('請允許推播通知權限'); return; }
+      }
+      const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+      await new Promise(resolve => {
+        if (reg.active) { resolve(); return; }
+        const t = setInterval(() => { if (reg.active) { clearInterval(t); resolve(); } }, 100);
+        setTimeout(() => clearInterval(t), 5000);
+      });
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+      if (!token) { alert('無法取得推播 token，請稍後再試'); return; }
+      await setDoc(doc(db, 'fcmTokens', token), {
+        token,
+        userId:    window._etfAuth.user.uid,
+        email:     window._etfAuth.user.email || '',
+        updatedAt: serverTimestamp(),
+        ua:        navigator.userAgent.slice(0, 200),
+      });
+      localStorage.setItem(LS_SUBSCRIBED, '1');
+      localStorage.setItem(LS_TOKEN, token);
+      updateBtn(true);
+    } catch (e) {
+      console.error('FCM subscribe error', e);
+      alert('訂閱失敗：' + e.message);
+    }
+  }
+
+  async function unsubscribe() {
+    const token = localStorage.getItem(LS_TOKEN);
+    if (token) {
+      try { await deleteDoc(doc(db, 'fcmTokens', token)); } catch (e) { console.warn('FCM token delete failed', e); }
+    }
+    localStorage.removeItem(LS_SUBSCRIBED);
+    localStorage.removeItem(LS_TOKEN);
+    updateBtn(false);
+  }
+
+  btn.addEventListener('click', () => { isSubscribed() ? unsubscribe() : subscribe(); });
+
+  onMessage(messaging, (payload) => {
+    const title = payload.data?.title || payload.notification?.title || 'ETF 通知';
+    const body  = payload.data?.body  || payload.notification?.body  || '';
+    const toast = Object.assign(document.createElement('div'), {
+      textContent: `${title}：${body}`,
+    });
+    Object.assign(toast.style, {
+      position: 'fixed', bottom: '20px', right: '20px', zIndex: '9999',
+      background: '#34d399', color: '#fff', padding: '14px 18px',
+      borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+      fontSize: '14px', maxWidth: '360px', wordBreak: 'break-word',
+    });
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 6000);
+  });
 </script>
 </body>
 </html>
