@@ -3467,13 +3467,14 @@ async function showUpgradeModal(context) {
     const founderFull = founderRem === 0;
     const proFull     = proRem === 0;
 
-    const PATREON_JOIN_URL = 'https://www.patreon.com/etfcross/membership';
+    const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28490004&is_free_trial=true';
+    const PATREON_PRO_URL     = 'https://www.patreon.com/checkout/etfcross?rid=28498975&is_free_trial=true';
     const founderClickAttr = founderFull
       ? ''
-      : `onclick="window.open('${PATREON_JOIN_URL}', '_blank', 'noopener')"`;
+      : `onclick="window.open('${PATREON_FOUNDER_URL}', '_blank', 'noopener')"`;
     const proClickAttr = proFull
       ? ''
-      : `onclick="window.open('${PATREON_JOIN_URL}', '_blank', 'noopener')"`;
+      : `onclick="window.open('${PATREON_PRO_URL}', '_blank', 'noopener')"`;
     const userEmail = window._etfAuth?.user?.email || '';
 
     return `
