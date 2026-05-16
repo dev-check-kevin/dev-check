@@ -3305,9 +3305,9 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   const provider = new GoogleAuthProvider();
   const authArea = document.getElementById('authArea');
 
-  const NOTES_COL      = collection(db, 'notes');
+  const NOTES_COL      = collection(db, 'dev_notes');
   const TOS_COL_ROOT   = 'dev_tos_acceptances';
-  const PORTFOLIO_COL  = collection(db, 'portfolios');
+  const PORTFOLIO_COL  = collection(db, 'dev_portfolios');
   const MAX_NOTES      = 15;
   const TOS_VERSION        = 'v1';
   const TOS_FORCE_REACCEPT = false;
@@ -3611,7 +3611,7 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   // ── Load portfolio from Firestore for logged-in users ─────────────────────
   async function loadUserPortfolio(uid) {
     try {
-      const docRef = doc(db, 'portfolios', uid);
+      const docRef = doc(db, 'dev_portfolios', uid);
       const snap = await getDoc(docRef);
 
       if (snap.exists()) {
@@ -3647,7 +3647,7 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   // ── Save portfolio to Firestore ──────────────────────────────────────────
   async function savePortfolioToFirestore(uid, email) {
     try {
-      const docRef = doc(db, 'portfolios', uid);
+      const docRef = doc(db, 'dev_portfolios', uid);
       await setDoc(docRef, {
         stocks: [...myPortfolio],
         email: email || '',
