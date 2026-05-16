@@ -537,6 +537,157 @@
     letter-spacing: 0.3px;
   }
 
+  /* ── Upgrade Modal ── */
+  .upgrade-modal-backdrop {
+    position: fixed; inset: 0; z-index: 10001;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: upgradeBackdropIn 0.2s ease;
+  }
+  @keyframes upgradeBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .upgrade-modal {
+    position: relative;
+    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg3) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    width: min(520px, calc(100vw - 32px));
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(88,166,255,0.15);
+    animation: upgradeModalIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    overflow: hidden;
+  }
+  @keyframes upgradeModalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .upgrade-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .upgrade-modal-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+  .upgrade-modal-close {
+    width: 30px; height: 30px;
+    border: none; background: transparent;
+    color: var(--text2); cursor: pointer;
+    font-size: 20px; line-height: 1; border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+  }
+  .upgrade-modal-close:hover {
+    background: var(--bg3); color: var(--text);
+  }
+  .upgrade-modal-body {
+    flex: 1; overflow-y: auto;
+    padding: 18px 20px;
+    font-size: 13px; color: var(--text2);
+  }
+  .upgrade-intro {
+    text-align: center; margin-bottom: 16px;
+  }
+  .upgrade-intro-icon {
+    font-size: 32px; margin-bottom: 6px;
+  }
+  .upgrade-intro-title {
+    color: var(--text); font-weight: 700; font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .upgrade-intro-sub {
+    color: var(--text3); font-size: 12px;
+  }
+  .upgrade-tier-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .upgrade-tier-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .upgrade-tier-card.founder {
+    border-color: color-mix(in srgb, #3fb950 25%, var(--border));
+  }
+  .upgrade-tier-card.founder:hover {
+    border-color: #3fb950;
+    background: color-mix(in srgb, #3fb950 5%, var(--bg2));
+  }
+  .upgrade-tier-card.pro:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg2));
+  }
+  .upgrade-tier-card.locked {
+    cursor: not-allowed; opacity: 0.55;
+  }
+  .upgrade-tier-card.locked:hover {
+    transform: none; border-color: var(--border);
+    background: var(--bg2);
+  }
+  .upgrade-tier-icon {
+    font-size: 28px; flex-shrink: 0;
+  }
+  .upgrade-tier-info { flex: 1; min-width: 0; }
+  .upgrade-tier-name {
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .upgrade-tier-founder-color { color: #3fb950; }
+  .upgrade-tier-pro-color { color: var(--accent); }
+  .upgrade-tier-price {
+    font-family: var(--mono);
+    font-size: 16px; font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .upgrade-tier-price small {
+    font-family: var(--sans); font-size: 11px;
+    color: var(--text3); font-weight: 400;
+    margin-left: 4px;
+  }
+  .upgrade-tier-desc {
+    font-size: 11.5px; color: var(--text2);
+    line-height: 1.55;
+  }
+  .upgrade-tier-remaining {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .upgrade-tier-remaining.full {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 35%, transparent);
+  }
+  .upgrade-disclaimer {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border-radius: 8px;
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.55;
+  }
+  .upgrade-disclaimer b { color: var(--text2); }
+
   /* ── Stats bar ── */
   .stats-bar {
     display: grid;
@@ -850,6 +1001,71 @@
     border: 1px solid var(--border2);
     border-radius: var(--radius);
     padding: 12px;
+  }
+
+  /* ── Timeline: locked card for non-paid users ── */
+  .wall-group-locked {
+    width: 280px;
+    background: linear-gradient(160deg,
+      color-mix(in srgb, var(--accent) 8%, var(--bg3)) 0%,
+      color-mix(in srgb, #d29922 6%, var(--bg3)) 100%);
+    border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .wall-group-locked:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .wall-locked-content {
+    text-align: center;
+    padding: 8px;
+  }
+  .wall-locked-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .wall-locked-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .wall-locked-sub {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .wall-locked-btn {
+    background: linear-gradient(135deg, #d29922, #f0a830);
+    color: #0d1117;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .wall-locked-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* ── Shifting: locked date button ── */
+  .weight-date-btn-locked {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, #d29922 14%, var(--bg2)),
+      color-mix(in srgb, var(--accent) 8%, var(--bg2)));
+    border: 1px dashed color-mix(in srgb, #d29922 50%, transparent);
+    color: #d29922;
+    font-weight: 700;
+  }
+  .weight-date-btn-locked:hover {
+    background: color-mix(in srgb, #d29922 22%, var(--bg2));
+    color: #d29922;
   }
 
   .wall-group-date {
@@ -1508,6 +1724,50 @@
   }
   .btn-logout:hover { color: var(--red); border-color: var(--red); }
 
+  /* ── Upgrade CTA / Tier badge ── */
+  #upgradeArea {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+  }
+  .btn-upgrade-cta {
+    background: linear-gradient(135deg, #d29922, #f0a830);
+    border: none;
+    border-radius: var(--radius);
+    color: #0d1117;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--sans);
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  .btn-upgrade-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+  .tier-badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 14px;
+    letter-spacing: 0.5px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .tier-badge-founder {
+    background: color-mix(in srgb, #3fb950 18%, var(--bg2));
+    color: #3fb950;
+    border: 1px solid color-mix(in srgb, #3fb950 40%, transparent);
+  }
+  .tier-badge-pro {
+    background: color-mix(in srgb, var(--accent) 18%, var(--bg2));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  @media (max-width: 640px) {
+    .btn-upgrade-cta { padding: 5px 8px; font-size: 11px; }
+    .tier-badge { font-size: 10px; padding: 3px 7px; }
+  }
+
   /* ── Notes page ── */
   .notes-page { max-width: 800px; margin: 0 auto; padding: 24px 20px; }
   .notes-login-prompt {
@@ -1978,6 +2238,7 @@
   <a class="tab-btn " href="shifting">產業權重輪動</a>
   <div class="auth-area">
     <a class="tab-btn " href="community">使用者反饋與筆記</a>
+    <div id="upgradeArea"></div>
     <div id="authArea"></div>
   </div>
 </nav>
@@ -2131,6 +2392,20 @@
   <div class="notes-list" id="notesList"><div class="notes-empty">載入中...</div></div>
 </div>
 </div><!-- end page-communityurl -->
+
+<!-- ── Upgrade Modal ── -->
+<div id="upgradeModal" class="upgrade-modal-backdrop" style="display:none"
+     onclick="if(event.target===this)closeUpgradeModal()">
+  <div class="upgrade-modal">
+    <div class="upgrade-modal-header">
+      <span class="upgrade-modal-title" id="upgradeModalTitle">升級會員</span>
+      <button class="upgrade-modal-close" onclick="closeUpgradeModal()" aria-label="關閉">×</button>
+    </div>
+    <div class="upgrade-modal-body" id="upgradeModalBody">
+      <!-- populated by showUpgradeModal() -->
+    </div>
+  </div>
+</div>
 
 <!-- ── My Portfolio Modal ── -->
 <div id="portfolioModal" class="portfolio-modal-backdrop" style="display:none"
@@ -2512,7 +2787,18 @@ function renderAIFeedback() {
 }
 
 // ── ETF card filter ───────────────────────────────────────────────────────
+// Returns true if adding `ticker` to activeFilters is allowed under current tier
+function canAddIntersection(ticker) {
+  if (activeFilters.has(ticker)) return true;            // removing is always allowed
+  if (isPaidTier()) return true;                         // founder / pro = no limit
+  return activeFilters.size < CARD_INTERSECTION_LIMIT;   // visitor / member = 5 max
+}
+
 function toggleETFFilter(ticker) {
+  if (!canAddIntersection(ticker)) {
+    if (typeof showUpgradeModal === 'function') showUpgradeModal('intersection');
+    return;
+  }
   const card = document.getElementById(`card-${ticker}`);
   if (activeFilters.has(ticker)) {
     activeFilters.delete(ticker);
@@ -2555,6 +2841,15 @@ function renderHistoryWall() {
   if (!WALL_DATA.length) {
     container.innerHTML = '<div class="wall-empty">暫無新增/移出紀錄</div>';
     return;
+  }
+
+  // ★ 5 日過濾（非付費）
+  let visibleData = WALL_DATA;
+  let hiddenCount = 0;
+  if (!isPaidTier()) {
+    const latest5Set = new Set(WALL_DATA.slice(0, 5).map(g => g.to_label));
+    visibleData = WALL_DATA.filter(g => latest5Set.has(g.to_label));
+    hiddenCount = WALL_DATA.length - visibleData.length;
   }
 
   const DOW = ['日','一','二','三','四','五','六'];
@@ -2604,7 +2899,7 @@ function renderHistoryWall() {
       ? stocks.flatMap(s => s.etfs.map(e => renderEtfCard(s, e, cardClass, sign, sharesClass))).join('')
       : `<div class="wall-no-change">${emptyMsg}</div>`}`;
 
-  container.innerHTML = [...WALL_DATA].reverse().map(g => `
+  const groupsHtml = [...visibleData].reverse().map(g => `
     <div class="wall-group">
       <div class="wall-group-date">
         <div class="wgd-range">
@@ -2632,6 +2927,20 @@ function renderHistoryWall() {
     </div>
   `).join('');
 
+  // ★ 升級鎖（位於最舊的一側，視覺上在最左邊）
+  const lockedHtml = hiddenCount > 0 ? `
+    <div class="wall-group wall-group-locked" onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('timeline')">
+      <div class="wall-locked-content">
+        <div class="wall-locked-icon">🔒</div>
+        <div class="wall-locked-title">更多歷史資料</div>
+        <div class="wall-locked-sub">${hiddenCount} 天前的異動記錄<br>僅 Founder / Pro 會員可見</div>
+        <button class="wall-locked-btn">升級查看</button>
+      </div>
+    </div>
+  ` : '';
+
+  container.innerHTML = lockedHtml + groupsHtml;
+
   requestAnimationFrame(() => {
     const addSections = container.querySelectorAll('.wall-add-section');
     let maxH = 0;
@@ -2648,11 +2957,31 @@ function _changeMatchesActiveDate(change) {
   return t.length >= 5 && t.slice(-5) === activeWeightDate;
 }
 
+// Computes visible dates for current tier (already reversed: 舊→新)
+function _getShiftingVisibleDates() {
+  if (isPaidTier()) return [...WEIGHT_ANALYSIS_DATES].reverse();
+  const latest5Set = new Set(WEIGHT_ANALYSIS_DATES.slice(0, 5));
+  return [...WEIGHT_ANALYSIS_DATES].reverse().filter(d => latest5Set.has(d));
+}
+
 function renderWeightDateRow() {
   const container = document.getElementById('weightDateRow');
   if (!container) return;
-  const visibleDates = [...WEIGHT_ANALYSIS_DATES].reverse();
-  container.innerHTML = visibleDates.map(d => `
+  const visibleDates = _getShiftingVisibleDates();
+  const hiddenCount  = WEIGHT_ANALYSIS_DATES.length - visibleDates.length;
+
+  // If active date got hidden (e.g. user logged out), reset to newest visible
+  if (visibleDates.length > 0 && !visibleDates.includes(activeWeightDate)) {
+    activeWeightDate = visibleDates[visibleDates.length - 1];
+  }
+
+  const lockedBtn = hiddenCount > 0 ? `
+    <button class="weight-date-btn weight-date-btn-locked"
+            onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('shifting')"
+            title="更早的 ${hiddenCount} 個交易日僅付費會員可見">🔒 +${hiddenCount}</button>
+  ` : '';
+
+  container.innerHTML = lockedBtn + visibleDates.map(d => `
     <button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}"
             onclick="selectWeightDate('${d}')">${d}</button>
   `).join('');
@@ -2673,7 +3002,7 @@ function _centerWeightDateRow() {
 }
 
 function scrollWeightDateRow(direction) {
-  const visibleDates = [...WEIGHT_ANALYSIS_DATES].reverse();
+  const visibleDates = _getShiftingVisibleDates();
   const currentIndex = visibleDates.indexOf(activeWeightDate);
   if (currentIndex === -1) return;
 
@@ -3051,19 +3380,181 @@ function renderUniqueTable() {
 }
 
 // ── My Portfolio ─────────────────────────────────────────────────────────
-const PORTFOLIO_KEY        = 'etf_my_portfolio_v1';
-const PORTFOLIO_LIMIT_FREE = 3;
-const PORTFOLIO_LIMIT_FULL = 10;
+const PORTFOLIO_KEY            = 'etf_my_portfolio_v1';
+const PORTFOLIO_LIMIT_VISITOR  = 3;
+const PORTFOLIO_LIMIT_MEMBER   = 10;
+const PORTFOLIO_LIMIT_PAID     = 50;
+const CARD_INTERSECTION_LIMIT  = 5;   // visitor/member 上限; founder/pro 無限
 
-function getPortfolioLimit() {
+// Backward-compat aliases
+const PORTFOLIO_LIMIT_FREE = PORTFOLIO_LIMIT_VISITOR;
+const PORTFOLIO_LIMIT_FULL = PORTFOLIO_LIMIT_MEMBER;
+
+// ── Tier helpers ────────────────────────────────────────────────────────
+// Returns one of: 'visitor' | 'member' | 'founder' | 'pro'
+function getUserTier() {
   const a = window._etfAuth;
-  return (a?.user && a?.tosAccepted) ? PORTFOLIO_LIMIT_FULL : PORTFOLIO_LIMIT_FREE;
+  if (!a?.user || !a?.tosAccepted) return 'visitor';
+  if (a.patreonTier === 'founder' || a.patreonTier === 'pro') return a.patreonTier;
+  return 'member';
 }
+
+function isPaidTier() {
+  const t = getUserTier();
+  return t === 'founder' || t === 'pro';
+}
+
+function getTrackingLimit() {
+  const tier = getUserTier();
+  if (tier === 'founder' || tier === 'pro') return PORTFOLIO_LIMIT_PAID;
+  if (tier === 'member') return PORTFOLIO_LIMIT_MEMBER;
+  return PORTFOLIO_LIMIT_VISITOR;
+}
+
+function getCardIntersectionLimit() {
+  return isPaidTier() ? Infinity : CARD_INTERSECTION_LIMIT;
+}
+
+// Legacy alias (existing call sites)
+function getPortfolioLimit() { return getTrackingLimit(); }
+
+// ── Upgrade button area (nav) ───────────────────────────────────────────
+function renderUpgradeButtons() {
+  const area = document.getElementById('upgradeArea');
+  if (!area) return;
+  const tier = getUserTier();
+  if (tier === 'founder') {
+    area.innerHTML = `<span class="tier-badge tier-badge-founder" title="創始會員">✦ Founder</span>`;
+    return;
+  }
+  if (tier === 'pro') {
+    area.innerHTML = `<span class="tier-badge tier-badge-pro" title="Pro 會員">✦ Pro</span>`;
+    return;
+  }
+  // Visitor / member: show upgrade CTA
+  area.innerHTML = `
+    <button class="btn-upgrade-cta" onclick="showUpgradeModal('cta')" title="升級解鎖完整功能">
+      ✦ 升級
+    </button>
+  `;
+}
+
+// ── Upgrade Modal ───────────────────────────────────────────────────────
+const UPGRADE_CONTEXTS = {
+  cta:          { icon: '✦', title: '升級會員',           sub: '解鎖完整 ETF 分析功能' },
+  timeline:     { icon: '📅', title: '查看完整歷史異動',   sub: '6 日前的 ETF 異動記錄僅付費會員可見' },
+  shifting:     { icon: '📊', title: '查看完整權重輪動',   sub: '6 日前的產業權重資料僅付費會員可見' },
+  intersection: { icon: '🎯', title: '無限卡片交集分析',   sub: '同時選擇 6+ 張卡片進行交集需付費會員' },
+  tracking:     { icon: '📌', title: '擴充追蹤上限',       sub: '升級後可追蹤 50 檔個股' },
+};
+
+async function showUpgradeModal(context) {
+  // Already paid? No need
+  if (isPaidTier()) return;
+
+  const modal = document.getElementById('upgradeModal');
+  const titleEl = document.getElementById('upgradeModalTitle');
+  const bodyEl  = document.getElementById('upgradeModalBody');
+  if (!modal || !bodyEl) return;
+
+  const ctx = UPGRADE_CONTEXTS[context] || UPGRADE_CONTEXTS.cta;
+  if (titleEl) titleEl.textContent = ctx.title;
+
+  // Initial render (without slot data)
+  const renderBody = (config) => {
+    const founderRem = config ? Math.max(0, (config.foundersMax || 500) - (config.foundersCount || 0)) : null;
+    const proRem     = config ? Math.max(0, (config.proMax     || 1500) - (config.proCount     || 0)) : null;
+    const founderFull = founderRem === 0;
+    const proFull     = proRem === 0;
+
+    const needLogin = !window._etfAuth?.user;
+    const founderClickAttr = founderFull
+      ? ''
+      : `onclick="${needLogin ? '_promptLoginThenUpgrade(\'founder\')' : '_startPatreonUpgrade(\'founder\')'}"`;
+    const proClickAttr = proFull
+      ? ''
+      : `onclick="${needLogin ? '_promptLoginThenUpgrade(\'pro\')' : '_startPatreonUpgrade(\'pro\')'}"`;
+
+    return `
+      <div class="upgrade-intro">
+        <div class="upgrade-intro-icon">${ctx.icon}</div>
+        <div class="upgrade-intro-title">${ctx.title}</div>
+        <div class="upgrade-intro-sub">${ctx.sub}</div>
+      </div>
+
+      <div class="upgrade-tier-card founder ${founderFull ? 'locked' : ''}" ${founderClickAttr}>
+        <div class="upgrade-tier-icon">🌱</div>
+        <div class="upgrade-tier-info">
+          <div class="upgrade-tier-name upgrade-tier-founder-color">Founder 創始會員</div>
+          <div class="upgrade-tier-price">$5 USD<small>/ 月（限早鳥 500 名）</small></div>
+          <div class="upgrade-tier-desc">追蹤 50 檔 · 無限卡片交集 · 全部歷史資料</div>
+        </div>
+        ${founderRem !== null ? `<span class="upgrade-tier-remaining ${founderFull ? 'full' : ''}">${founderFull ? '名額已滿' : '剩 ' + founderRem + ' 名'}</span>` : ''}
+      </div>
+
+      <div class="upgrade-tier-card pro ${proFull ? 'locked' : ''}" ${proClickAttr}>
+        <div class="upgrade-tier-icon">⚡</div>
+        <div class="upgrade-tier-info">
+          <div class="upgrade-tier-name upgrade-tier-pro-color">Pro 會員</div>
+          <div class="upgrade-tier-price">$9 USD<small>/ 月（限 1500 名）</small></div>
+          <div class="upgrade-tier-desc">追蹤 50 檔 · 無限卡片交集 · 全部歷史資料</div>
+        </div>
+        ${proRem !== null ? `<span class="upgrade-tier-remaining ${proFull ? 'full' : ''}">${proFull ? '名額已滿' : '剩 ' + proRem + ' 名'}</span>` : ''}
+      </div>
+
+      <div class="upgrade-disclaimer">
+        <b>使用方式：</b>點選方案 → Patreon 完成訂閱 → 自動解鎖功能（透過 Patreon webhook 即時同步）<br>
+        若已是 Patreon 訂閱者但未自動解鎖，請重新登入或聯絡客服。
+      </div>
+    `;
+  };
+
+  // Show modal with loading state
+  bodyEl.innerHTML = renderBody(null);
+  modal.style.display = 'flex';
+
+  // Fetch real-time slot counts
+  if (typeof window._getPatreonConfig === 'function') {
+    try {
+      const config = await window._getPatreonConfig();
+      bodyEl.innerHTML = renderBody(config);
+    } catch (err) {
+      console.warn('Failed to fetch Patreon config:', err);
+      // Keep the initial render (without slot data)
+    }
+  }
+}
+
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgradeModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// If user clicks upgrade but isn't logged in, prompt login first
+function _promptLoginThenUpgrade(tier) {
+  closeUpgradeModal();
+  try { localStorage.setItem('patreon_pending_tier', tier); } catch {}
+  alert('請先登入 Google 帳號才能訂閱 Patreon');
+  // Trigger login flow via the existing modal (opens at TOS tab)
+  const loginBtn = document.getElementById('btnLogin');
+  if (loginBtn) loginBtn.click();
+}
+
+// ESC closes upgrade modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const m = document.getElementById('upgradeModal');
+    if (m && m.style.display !== 'none') closeUpgradeModal();
+  }
+});
 
 // Called by Firebase module when auth state changes; re-renders cards + modal
 window.onAuthChanged = () => {
   renderETFCards();
   renderModalChips();
+  if (typeof renderUpgradeButtons === 'function') renderUpgradeButtons();
+  if (typeof renderHistoryWall === 'function') renderHistoryWall();
+  if (typeof renderWeightDateRow === 'function') renderWeightDateRow();
 };
 
 // Build code→name/industry lookup once
@@ -3095,6 +3586,10 @@ function restoreCardActiveStates() {
 
 function togglePortfolioFilter() {
   if (myPortfolio.size === 0) { openPortfolioModal(); return; }
+  if (!canAddIntersection('MY_PORTFOLIO')) {
+    if (typeof showUpgradeModal === 'function') showUpgradeModal('intersection');
+    return;
+  }
   const card = document.getElementById('card-MY_PORTFOLIO');
   if (activeFilters.has('MY_PORTFOLIO')) {
     activeFilters.delete('MY_PORTFOLIO');
@@ -3163,32 +3658,32 @@ function handleSavePortfolio() {
 function renderModalChips() {
   const wrap  = document.getElementById('modalChips');
   if (!wrap) return;
-  const limit   = getPortfolioLimit();
+  const limit   = getTrackingLimit();
   const isFull  = _tempPortfolio.size >= limit;
   const inp     = document.getElementById('modalInput');
   if (inp) inp.disabled = isFull;
 
-  const a = window._etfAuth;
-  const isGuest      = !a?.user;
-  const needsTos     = a?.user && !a?.tosAccepted;
-  const showUpgrade  = isFull && limit === PORTFOLIO_LIMIT_FREE;
+  const tier = getUserTier();
 
   let upgradeHtml = '';
-  if (showUpgrade && isGuest) {
+  if (isFull && tier === 'visitor') {
+    const a = window._etfAuth;
+    const tosBlocked = a?.user && !a?.tosAccepted;
     upgradeHtml = `
       <div style="margin-bottom:10px;background:color-mix(in srgb,var(--accent) 8%,var(--bg3));
                   border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
                   border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2)">
-        🔒 <b style="color:var(--text)">已達訪客上限（${PORTFOLIO_LIMIT_FREE} 檔）</b><br>
-        登入並同意條款最多可新增 ${PORTFOLIO_LIMIT_FULL} 檔追蹤
+        ${tosBlocked ? '📋' : '🔒'} <b style="color:var(--text)">已達訪客上限（${PORTFOLIO_LIMIT_VISITOR} 檔）</b><br>
+        ${tosBlocked ? '同意使用條款' : '登入並同意條款'}最多可新增 ${PORTFOLIO_LIMIT_MEMBER} 檔追蹤
       </div>`;
-  } else if (showUpgrade && needsTos) {
+  } else if (isFull && tier === 'member') {
     upgradeHtml = `
-      <div style="margin-bottom:10px;background:color-mix(in srgb,var(--accent) 8%,var(--bg3));
-                  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+      <div style="margin-bottom:10px;background:color-mix(in srgb,#d29922 12%,var(--bg3));
+                  border:1px solid color-mix(in srgb,#d29922 40%,transparent);
                   border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2)">
-        📋 <b style="color:var(--text)">已達基本上限（${PORTFOLIO_LIMIT_FREE} 檔）</b><br>
-        同意使用條款可擴充至 ${PORTFOLIO_LIMIT_FULL} 檔追蹤
+        ✦ <b style="color:var(--text)">已達會員上限（${PORTFOLIO_LIMIT_MEMBER} 檔）</b><br>
+        升級 Founder / Pro 可追蹤 ${PORTFOLIO_LIMIT_PAID} 檔
+        <button onclick="showUpgradeModal('tracking')" style="margin-left:6px;padding:3px 10px;background:#d29922;color:#0d1117;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600">升級</button>
       </div>`;
   } else if (isFull) {
     upgradeHtml = `<div style="font-size:12px;color:var(--red);padding:2px 0 8px">已達上限（${limit} 檔）</div>`;
@@ -3262,7 +3757,7 @@ function onPortfolioKeydown(e) {
 function selectModalItem(i) {
   const [code] = _ddItems[i];
   if (!_tempPortfolio.has(code)) {
-    if (_tempPortfolio.size >= getPortfolioLimit()) return;
+    if (_tempPortfolio.size >= getTrackingLimit()) return;
     _tempPortfolio.add(code);
     renderModalChips();
   }
@@ -3276,6 +3771,7 @@ function selectModalItem(i) {
 renderETFCards();
 renderUniqueTable();
 renderTable();
+renderUpgradeButtons();
 if (HISTORY_DATA.length > 0) {
   updateHistoryDesc();
 }
@@ -3289,6 +3785,8 @@ renderHistoryWall();
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+  import { getFunctions, httpsCallable }
+    from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ",
@@ -3299,11 +3797,44 @@ renderHistoryWall();
     appId: "1:447309961676:web:5f665d92457d471350e569"
   };
 
-  const app      = initializeApp(firebaseConfig);
-  const auth     = getAuth(app);
-  const db       = getFirestore(app);
-  const provider = new GoogleAuthProvider();
-  const authArea = document.getElementById('authArea');
+  const app       = initializeApp(firebaseConfig);
+  const auth      = getAuth(app);
+  const db        = getFirestore(app);
+  const functions = getFunctions(app);
+  const provider  = new GoogleAuthProvider();
+  const authArea  = document.getElementById('authArea');
+
+  // ── Patreon OAuth config ──────────────────────────────────────────────────
+  const PATREON_CLIENT_ID = 'atont0WtRpJbL_dCGF7zqQZLxZAaNmwT8yEvgYYfzCjDFg-59xmaATz4IpLt5zL6';
+  const PATREON_SCOPE     = 'identity identity.memberships';
+  function _patreonRedirectUri() {
+    return window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'patreon-callback.html';
+  }
+  window._startPatreonUpgrade = function(tier) {
+    if (!auth.currentUser) {
+      alert('請先登入 Google 帳號');
+      return;
+    }
+    // Store tier in localStorage so callback page can pick it up
+    try { localStorage.setItem('patreon_pending_tier', tier); } catch {}
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id:     PATREON_CLIENT_ID,
+      redirect_uri:  _patreonRedirectUri(),
+      scope:         PATREON_SCOPE,
+      state:         tier,
+    });
+    window.location.href = 'https://www.patreon.com/oauth2/authorize?' + params.toString();
+  };
+  window._patreonLink = async function(code) {
+    const call = httpsCallable(functions, 'linkPatreon');
+    return await call({ code, redirectUri: _patreonRedirectUri() });
+  };
+  window._getPatreonConfig = async function() {
+    const call = httpsCallable(functions, 'getPatreonConfig');
+    const result = await call({});
+    return result.data;
+  };
 
   const NOTES_COL      = collection(db, 'dev_notes');
   const TOS_COL_ROOT   = 'dev_tos_acceptances';
@@ -3318,7 +3849,23 @@ renderHistoryWall();
   let _skipNextModal = false;
 
   // Bridge object: main script reads this for portfolio limit decisions
-  window._etfAuth = { user: null, tosAccepted: false };
+  window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null };
+
+  // Helper: fetch patreonAccess/{uid} and return {tier, verifiedAt} or {tier:null}
+  async function _fetchPatreonAccess(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'patreonAccess', uid));
+      if (snap.exists()) {
+        const d = snap.data();
+        if (d.verified === true && (d.tier === 'founder' || d.tier === 'pro')) {
+          return { tier: d.tier, verifiedAt: d.verifiedAt || null };
+        }
+      }
+    } catch (e) {
+      console.warn('[patreon] fetch access failed:', e);
+    }
+    return { tier: null, verifiedAt: null };
+  }
 
   // ── LocalStorage key constants ─────────────────────────────────────────
   const LS_GUEST_VISITED  = 'etf_guest_visited';
@@ -3400,7 +3947,9 @@ renderHistoryWall();
   // opts.startTab=id   → force a specific starting tab
   function openCombinedModal(user, opts = {}) {
     const tosAccepted = checkTosAccepted();
-    window._etfAuth = { user, tosAccepted };
+    const prevTier         = window._etfAuth?.patreonTier      ?? null;
+    const prevVerifiedAt   = window._etfAuth?.patreonVerifiedAt ?? null;
+    window._etfAuth = { user, tosAccepted, patreonTier: prevTier, patreonVerifiedAt: prevVerifiedAt };
     if (_skipNextModal) { _skipNextModal = false; return; }
     if (!opts.force && !_shouldShowModal(user)) return;
     const modal = document.getElementById('tosModal');
@@ -3468,13 +4017,15 @@ renderHistoryWall();
           if (mode === 'login') {
             const result = await signInWithPopup(auth, provider);
             await recordTosAcceptance(result.user);
-            window._etfAuth = { user: result.user, tosAccepted: true };
+            const pa = await _fetchPatreonAccess(result.user.uid);
+            window._etfAuth = { user: result.user, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
             if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
             _skipNextModal = true;
             closeCombinedModal();
           } else if (mode === 'reaccept') {
             await recordTosAcceptance(currentUser);
-            window._etfAuth = { user: currentUser, tosAccepted: true };
+            const pa = await _fetchPatreonAccess(currentUser.uid);
+            window._etfAuth = { user: currentUser, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
             if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
             closeCombinedModal();
           } else {
@@ -3670,15 +4221,22 @@ renderHistoryWall();
   };
 
   // ── Auth state ───────────────────────────────────────────────────────────
-  onAuthStateChanged(auth, user => {
+  onAuthStateChanged(auth, async user => {
     currentUser = user;
     if (user) {
       renderLoggedIn(user);
-      loadUserPortfolio(user.uid);
+      // Fetch patreon tier in parallel with portfolio
+      const [pa] = await Promise.all([
+        _fetchPatreonAccess(user.uid),
+        loadUserPortfolio(user.uid),
+      ]);
+      const tosAccepted = checkTosAccepted();
+      window._etfAuth = { user, tosAccepted, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
     }
     else      {
       renderLoggedOut();
       myPortfolio = new Set(JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || '[]'));
+      window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null };
       renderETFCards();
       restoreCardActiveStates();
       renderTable();
