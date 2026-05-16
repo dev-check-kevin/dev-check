@@ -3287,7 +3287,7 @@ if (HISTORY_DATA.length > 0) {
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, deleteDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc }
+  import { getFirestore, collection, addDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -3306,7 +3306,7 @@ if (HISTORY_DATA.length > 0) {
   const authArea = document.getElementById('authArea');
 
   const NOTES_COL      = collection(db, 'notes');
-  const TOS_ACPT_COL   = collection(db, 'tos_acceptances');
+  const TOS_COL_ROOT   = 'dev_tos_acceptances';
   const PORTFOLIO_COL  = collection(db, 'portfolios');
   const MAX_NOTES      = 15;
   const TOS_VERSION        = 'v1';
@@ -3373,7 +3373,7 @@ if (HISTORY_DATA.length > 0) {
     try { localStorage.setItem('tos_accepted_version', TOS_VERSION); } catch(e) {}
     try {
       const tosContent = (document.getElementById('tosBody')?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 5000);
-      await addDoc(TOS_ACPT_COL, {
+      await addDoc(collection(db, TOS_COL_ROOT, user.uid, 'records'), {
         uid:        user.uid,
         email:      user.email || '',
         version:    TOS_VERSION,
@@ -3693,11 +3693,12 @@ if (HISTORY_DATA.length > 0) {
 <script type="module">
   import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
   import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging.js";
-  import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
   const VAPID_KEY = "BIqE0amP-OOTHyWSodtMP000ZDFn8pkNOQRtNJmQQE5V0J1iiHL-WGqkljWvlINHDlflNfOTgZjDSm17T4Ip-Ss";
-  const LS_SUBSCRIBED = 'fcm_subscribed';
+  const LS_SUBSCRIBED = 'fcm_subscribed_v2';
   const LS_TOKEN      = 'fcm_token';
+  const LS_UID        = 'fcm_uid';
 
   const app       = getApps().length ? getApps()[0] : initializeApp({ apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ", authDomain: "etf-analysis-master.firebaseapp.com", projectId: "etf-analysis-master", storageBucket: "etf-analysis-master.firebasestorage.app", messagingSenderId: "447309961676", appId: "1:447309961676:web:5f665d92457d471350e569" });
   const messaging = getMessaging(app);
@@ -3738,15 +3739,18 @@ if (HISTORY_DATA.length > 0) {
       });
       const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
       if (!token) { alert('無法取得推播 token，請稍後再試'); return; }
-      await setDoc(doc(db, 'fcmTokens', token), {
+      const uid = window._etfAuth.user.uid;
+      await setDoc(doc(db, 'dev_fcmTokens', uid, 'devices', token), {
         token,
-        userId:    window._etfAuth.user.uid,
+        userId:    uid,
         email:     window._etfAuth.user.email || '',
+        active:    true,
         updatedAt: serverTimestamp(),
         ua:        navigator.userAgent.slice(0, 200),
       });
       localStorage.setItem(LS_SUBSCRIBED, '1');
       localStorage.setItem(LS_TOKEN, token);
+      localStorage.setItem(LS_UID, uid);
       updateBtn(true);
     } catch (e) {
       console.error('FCM subscribe error', e);
@@ -3756,11 +3760,13 @@ if (HISTORY_DATA.length > 0) {
 
   async function unsubscribe() {
     const token = localStorage.getItem(LS_TOKEN);
-    if (token) {
-      try { await deleteDoc(doc(db, 'fcmTokens', token)); } catch (e) { console.warn('FCM token delete failed', e); }
+    const uid   = window._etfAuth?.user?.uid || localStorage.getItem(LS_UID);
+    if (token && uid) {
+      try { await updateDoc(doc(db, 'dev_fcmTokens', uid, 'devices', token), { active: false }); } catch (e) { console.warn('FCM unsubscribe failed', e); }
     }
     localStorage.removeItem(LS_SUBSCRIBED);
     localStorage.removeItem(LS_TOKEN);
+    localStorage.removeItem(LS_UID);
     updateBtn(false);
   }
 
