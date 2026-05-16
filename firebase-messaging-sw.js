@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.data?.body || '',
     icon: self.registration.scope + 'favicon.png',
     tag: 'etf-notification',
-    data: { url: payload.data?.url || '/shifting' },
+    data: { url: payload.data?.url || 'shifting' },
   };
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
