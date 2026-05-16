@@ -22,6 +22,24 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.data?.body || '',
     icon: self.registration.scope + 'favicon.png',
     tag: 'etf-notification',
+    data: { url: payload.data?.url || '/shifting' },
   };
   return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// 點擊通知時開啟對應頁面
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/shifting';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.registration.scope) && 'focus' in client) {
+          client.focus();
+          return client.navigate(url);
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });
