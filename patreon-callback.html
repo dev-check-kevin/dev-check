@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patreon 訂閱驗證中…｜ETF Cross</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0d1117;
+    --bg2:     #161b22;
+    --bg3:     #1f2937;
+    --border:  #30363d;
+    --text:    #e6edf3;
+    --text2:   #8b949e;
+    --text3:   #6e7681;
+    --accent:  #58a6ff;
+    --green:   #3fb950;
+    --red:     #f85149;
+    --gold:    #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    line-height: 1.6;
+  }
+  .card {
+    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg3) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .status-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+  .status-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .status-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .status-sub b {
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .spinner {
+    display: inline-block;
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-home {
+    display: inline-block;
+    background: var(--accent);
+    color: #0d1117;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-home:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text2); }
+  .error-detail {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 12px 0 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    text-align: left;
+    word-break: break-word;
+  }
+  .badge-success { color: var(--green); }
+  .badge-error   { color: var(--red); }
+  .tier-display {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px 12px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--green) 18%, var(--bg2));
+    color: var(--green);
+    border: 1px solid color-mix(in srgb, var(--green) 40%, transparent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="spinner"></div>
+  <div class="status-title">Patreon 訂閱驗證中…</div>
+  <div class="status-sub">正在與 Patreon 對接，請稍候</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+  import { getFunctions, httpsCallable }
+    from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ",
+    authDomain: "etf-analysis-master.firebaseapp.com",
+    projectId: "etf-analysis-master",
+    storageBucket: "etf-analysis-master.firebasestorage.app",
+    messagingSenderId: "447309961676",
+    appId: "1:447309961676:web:5f665d92457d471350e569"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const functions = getFunctions(app);
+
+  const card = document.getElementById('card');
+  const params = new URLSearchParams(window.location.search);
+  const code  = params.get('code');
+  const tier  = params.get('state');
+  const error = params.get('error');
+
+  function renderError(title, detail) {
+    card.innerHTML = `
+      <div class="status-icon badge-error">✕</div>
+      <div class="status-title">${title}</div>
+      <div class="status-sub">您的 Google 帳號未變動，可重試或返回首頁</div>
+      ${detail ? `<div class="error-detail">${detail}</div>` : ''}
+      <a class="btn-home" href="./">返回首頁</a>
+      <button class="btn-secondary" onclick="history.back()">重試</button>
+    `;
+  }
+
+  function renderSuccess(tierName) {
+    card.innerHTML = `
+      <div class="status-icon badge-success">✓</div>
+      <div class="status-title">訂閱成功，歡迎成為 ${tierName}</div>
+      <div class="status-sub">所有付費功能已解鎖，即將自動返回首頁…</div>
+      <div class="tier-display">✦ ${tierName}</div>
+      <div style="margin-top:20px">
+        <a class="btn-home" href="./">立即返回</a>
+      </div>
+    `;
+    // Clear pending tier marker
+    try { localStorage.removeItem('patreon_pending_tier'); } catch {}
+    setTimeout(() => { window.location.href = './'; }, 3500);
+  }
+
+  // Patreon returned an error
+  if (error) {
+    renderError('Patreon 授權失敗', `${error}: ${params.get('error_description') || '使用者取消授權或拒絕存取'}`);
+  } else if (!code) {
+    renderError('參數錯誤', '缺少授權碼，請從首頁重新發起升級流程');
+  } else {
+    // Wait for auth state, then call linkPatreon
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        renderError(
+          '請先登入 Google 帳號',
+          '為了關聯您的 Patreon 訂閱到本站帳號，請先以 Google 登入後再升級'
+        );
+        return;
+      }
+
+      try {
+        const redirectUri = window.location.origin
+                          + window.location.pathname.replace(/[^/]*$/, '')
+                          + 'patreon-callback.html';
+        const call = httpsCallable(functions, 'linkPatreon');
+        const result = await call({ code, redirectUri });
+        const data = result.data || {};
+        const tierName = data.tierName || (data.tier === 'founder' ? '創始會員' : 'Pro 會員');
+        renderSuccess(tierName);
+      } catch (err) {
+        console.error('linkPatreon error:', err);
+        let title = '訂閱關聯失敗';
+        let detail = err.message || String(err);
+        if (err.code === 'functions/permission-denied') {
+          title = '尚未成為 Patreon 訂閱者';
+          detail = '請先前往 Patreon 訂閱 $5 (Founder) 或 $9 (Pro) 方案，再回到本站升級。';
+        } else if (err.code === 'functions/resource-exhausted') {
+          title = '該方案名額已滿';
+          detail = '該方案已售罄，請考慮另一方案或加入候補名單。';
+        }
+        renderError(title, detail);
+      }
+    });
+  }
+</script>
+</body>
+</html>
