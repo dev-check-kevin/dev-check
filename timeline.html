@@ -3467,13 +3467,14 @@ async function showUpgradeModal(context) {
     const founderFull = founderRem === 0;
     const proFull     = proRem === 0;
 
-    const needLogin = !window._etfAuth?.user;
+    const PATREON_JOIN_URL = 'https://www.patreon.com/etfcross/membership';
     const founderClickAttr = founderFull
       ? ''
-      : `onclick="${needLogin ? '_promptLoginThenUpgrade(\'founder\')' : '_startPatreonUpgrade(\'founder\')'}"`;
+      : `onclick="window.open('${PATREON_JOIN_URL}', '_blank', 'noopener')"`;
     const proClickAttr = proFull
       ? ''
-      : `onclick="${needLogin ? '_promptLoginThenUpgrade(\'pro\')' : '_startPatreonUpgrade(\'pro\')'}"`;
+      : `onclick="window.open('${PATREON_JOIN_URL}', '_blank', 'noopener')"`;
+    const userEmail = window._etfAuth?.user?.email || '';
 
     return `
       <div class="upgrade-intro">
@@ -3503,8 +3504,18 @@ async function showUpgradeModal(context) {
       </div>
 
       <div class="upgrade-disclaimer">
-        <b>使用方式：</b>點選方案 → Patreon 完成訂閱 → 自動解鎖功能（透過 Patreon webhook 即時同步）<br>
-        若已是 Patreon 訂閱者但未自動解鎖，請重新登入或聯絡客服。
+        <b>訂閱步驟：</b>
+        <ol style="margin:6px 0 8px 18px;padding:0;line-height:1.7">
+          <li>點上方方案 → 開啟 Patreon 頁面 → 在 Patreon 完成訂閱</li>
+          <li>${userEmail
+              ? '<b>用同一個 email 訂閱</b>（你目前是 <span style="color:var(--text2);font-family:var(--mono);font-size:11px">' + userEmail + '</span>）'
+              : '<b>請先登入本站再訂閱</b>，並用相同 email 在 Patreon 訂閱'}</li>
+          <li>訂閱完成後回到本站 → <b>重新整理頁面</b>即自動解鎖（webhook 自動同步）</li>
+        </ol>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          已在 Patreon 訂閱但未自動解鎖？
+          <a href="javascript:void(0)" onclick="_relinkPatreon()" style="color:var(--accent);text-decoration:underline">手動綁定帳號 →</a>
+        </div>
       </div>
     `;
   };
@@ -3528,6 +3539,21 @@ async function showUpgradeModal(context) {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgradeModal');
   if (modal) modal.style.display = 'none';
+}
+
+// "已訂閱想綁定帳號" entry — kicks off Patreon OAuth flow
+function _relinkPatreon() {
+  if (!window._etfAuth?.user) {
+    alert('請先用 Google 登入本站');
+    closeUpgradeModal();
+    const loginBtn = document.getElementById('btnLogin');
+    if (loginBtn) loginBtn.click();
+    return;
+  }
+  closeUpgradeModal();
+  if (typeof window._startPatreonUpgrade === 'function') {
+    window._startPatreonUpgrade('founder'); // state value irrelevant — backend reads actual tier
+  }
 }
 
 // If user clicks upgrade but isn't logged in, prompt login first
