@@ -1,6 +1,6 @@
 {
-  "name": "ETF Cross",
-  "short_name": "ETF Cross",
+  "name": "ETF Cross | 你的 AI 助理",
+  "short_name": "ETF Cross | 你的 AI 助理",
   "description": "台灣 ETF 交叉持股分析",
   "start_url": "/",
   "display": "standalone",
