@@ -30,16 +30,16 @@ messaging.onBackgroundMessage((payload) => {
 // 點擊通知時開啟對應頁面
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/shifting';
+  const path = event.notification.data?.url || '/shifting';
+  const fullUrl = new URL(path, self.registration.scope).href;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.includes(self.registration.scope) && 'focus' in client) {
-          client.focus();
-          return client.navigate(url);
+        if (client.url.startsWith(self.registration.scope) && 'focus' in client) {
+          return client.navigate ? client.navigate(fullUrl).then(c => c.focus()) : client.focus();
         }
       }
-      return clients.openWindow(url);
+      return clients.openWindow(fullUrl);
     })
   );
 });
