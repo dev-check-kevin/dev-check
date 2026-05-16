@@ -25,7 +25,7 @@
 <meta name="twitter:title" content="主動式 ETF 持股異動歷史｜ETF Cross">
 <meta name="twitter:description" content="每日追蹤 00981A、00982A、00991A、00992A 等主動式 ETF 成分股異動，比對換股方向、加倉減倉動作，掌握主動經理人最新選股與資金流向。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg:        #0d1117;
@@ -38,7 +38,7 @@
     --text3:     #6e7681;
     --accent:    #58a6ff;
     --green:     #3fb950;
-    --red:       #f85149;
+    --red:       #e06a40;
     --gold:      #d29922;
     --radius:    10px;
     --radius-lg: 16px;
@@ -232,6 +232,33 @@
     font-weight: 600;
   }
   .agt-arrow { font-size: 9px; opacity: 0.7; }
+  @keyframes agt-limit-in  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes agt-limit-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes agt-limit-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  #intersectionLimitHint {
+    display: none;
+    align-items: center;
+    padding: 3px 12px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #d29922, #f0a830);
+    color: #0d1117;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1;
+    user-select: none;
+  }
+  #intersectionLimitHint.show {
+    display: inline-flex;
+    animation: agt-limit-in 0.25s ease both, agt-limit-blink 0.7s ease 0.25s 4;
+  }
+  #intersectionLimitHint.hide {
+    display: inline-flex;
+    animation: agt-limit-out 0.4s ease forwards;
+  }
   .etf-card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -497,6 +524,57 @@
     font-family: var(--sans);
   }
   .pm-chip-x:hover { opacity: 1; color: var(--red); }
+  /* ── Paid card tab bar ── */
+  .pm-card-tab-bar {
+    display: flex;
+    gap: 2px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    align-items: center;
+  }
+  .pm-card-tab-bar::after {
+    content: '點兩下更改卡片名稱';
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: var(--text3);
+    opacity: 0.45;
+    padding-left: 12px;
+    white-space: nowrap;
+  }
+  .pm-card-tab-bar::-webkit-scrollbar { display: none; }
+  .pm-card-tab {
+    padding: 9px 14px 8px;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    margin-bottom: -1px;
+    user-select: none;
+  }
+  .pm-card-tab:hover { color: var(--text2); }
+  .pm-card-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  .pm-tab-rename-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    color: var(--text);
+    font-size: 12px;
+    font-family: var(--sans);
+    font-weight: 600;
+    outline: none;
+    width: 56px;
+    padding: 0;
+  }
   .portfolio-modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -542,155 +620,128 @@
   }
 
   /* ── Upgrade Modal ── */
-  .upgrade-modal-backdrop {
-    position: fixed; inset: 0; z-index: 10001;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.72);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    animation: upgradeBackdropIn 0.2s ease;
-  }
-  @keyframes upgradeBackdropIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  .upgrade-modal {
-    position: relative;
-    background: linear-gradient(180deg, var(--bg2) 0%, var(--bg3) 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    width: min(520px, calc(100vw - 32px));
-    max-height: 88vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(88,166,255,0.15);
-    animation: upgradeModalIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-    overflow: hidden;
-  }
-  @keyframes upgradeModalIn {
-    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  /* ── PaidLetterModal ── */
+  @keyframes plBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes plCardIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
-  .upgrade-modal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+  .pl-backdrop {
+    position: fixed; inset: 0; z-index: 10001;
+    display: flex; align-items: flex-start; justify-content: center;
+    background: rgba(8, 10, 16, 0.86);
+    padding: 40px 20px;
+    overflow-y: auto;
+    animation: plBackdropIn 0.2s ease;
   }
-  .upgrade-modal-title {
-    font-size: 15px; font-weight: 700; color: var(--text);
+  .pl-card {
+    width: 100%; max-width: 640px;
+    background: #f6f1e6;
+    color: #2b2620;
+    border-radius: 4px;
+    padding: 52px 64px 44px;
+    font-family: "Noto Serif TC", "Songti TC", Georgia, serif;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 25px 70px -10px rgba(0,0,0,0.75),
+      inset 0 0 80px rgba(0,0,0,0.10);
+    background-image:
+      radial-gradient(ellipse at center, transparent 52%, rgba(0,0,0,0.12) 100%);
+    position: relative;
+    margin: auto;
+    animation: plCardIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
   }
-  .upgrade-modal-close {
-    width: 30px; height: 30px;
-    border: none; background: transparent;
-    color: var(--text2); cursor: pointer;
-    font-size: 20px; line-height: 1; border-radius: 50%;
-    transition: background 0.15s, color 0.15s;
+  .pl-close {
+    position: absolute; top: 18px; right: 20px;
+    width: 28px; height: 28px; border: 0; background: transparent;
+    color: #9c8f78; cursor: pointer; font-size: 18px; line-height: 1;
+    font-family: inherit; transition: color 0.15s;
   }
-  .upgrade-modal-close:hover {
-    background: var(--bg3); color: var(--text);
+  .pl-close:hover { color: #2b2620; }
+  .pl-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #9a8a6c;
   }
-  .upgrade-modal-body {
-    flex: 1; overflow-y: auto;
-    padding: 18px 20px;
-    font-size: 13px; color: var(--text2);
+  .pl-greeting {
+    font-size: 27px; line-height: 1.5; font-weight: 500;
+    margin: 22px 0 16px; letter-spacing: 0.01em; color: #2b2620;
   }
-  .upgrade-intro {
-    text-align: center; margin-bottom: 16px;
+  .pl-body {
+    font-size: 15px; line-height: 1.95; color: #4a4036;
+    letter-spacing: 0.02em;
   }
-  .upgrade-intro-icon {
-    font-size: 32px; margin-bottom: 6px;
-  }
-  .upgrade-intro-title {
-    color: var(--text); font-weight: 700; font-size: 15px;
-    margin-bottom: 4px;
-  }
-  .upgrade-intro-sub {
-    color: var(--text3); font-size: 12px;
-  }
-  .upgrade-tier-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
+  .pl-body b { color: #2b2620; }
+  .pl-plans { margin-top: 32px; }
+  .pl-plan {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: center;
+    padding: 16px 8px;
+    border-top: 1px solid #d9cfb8;
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s, transform 0.1s;
-    display: flex; align-items: center; gap: 14px;
+    margin: 0 -8px;
+    border-radius: 2px;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid #d9cfb8;
+    width: calc(100% + 16px);
+    text-align: left;
+    color: inherit;
+    font-family: inherit;
+    transition: background 0.15s;
   }
-  .upgrade-tier-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-1px);
+  .pl-plan:hover { background: rgba(43,38,32,0.05); }
+  .pl-plan.full { cursor: not-allowed; opacity: 0.5; }
+  .pl-plan-div { border-top: 1px solid #d9cfb8; margin: 0 0 0 0; }
+  .pl-plan-name { font-size: 16px; font-weight: 600; color: #2b2620; }
+  .pl-plan-note {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 12px; color: #7a6a52; margin-top: 3px; font-weight: 400;
   }
-  .upgrade-tier-card.founder {
-    border-color: color-mix(in srgb, #3fb950 25%, var(--border));
+  .pl-plan-feats {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 12px; color: #5e5546; line-height: 1.7; align-self: center;
   }
-  .upgrade-tier-card.founder:hover {
-    border-color: #3fb950;
-    background: color-mix(in srgb, #3fb950 5%, var(--bg2));
-  }
-  .upgrade-tier-card.pro:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 5%, var(--bg2));
-  }
-  .upgrade-tier-card.locked {
-    cursor: not-allowed; opacity: 0.55;
-  }
-  .upgrade-tier-card.locked:hover {
-    transform: none; border-color: var(--border);
-    background: var(--bg2);
-  }
-  .upgrade-tier-icon {
-    font-size: 28px; flex-shrink: 0;
-  }
-  .upgrade-tier-info { flex: 1; min-width: 0; }
-  .upgrade-tier-name {
-    font-size: 14px; font-weight: 700;
-    margin-bottom: 2px;
-  }
-  .upgrade-tier-founder-color { color: #3fb950; }
-  .upgrade-tier-pro-color { color: var(--accent); }
-  .upgrade-tier-price {
-    font-family: var(--mono);
-    font-size: 16px; font-weight: 700;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .upgrade-tier-price small {
-    font-family: var(--sans); font-size: 11px;
-    color: var(--text3); font-weight: 400;
-    margin-left: 4px;
-  }
-  .upgrade-tier-desc {
-    font-size: 11.5px; color: var(--text2);
-    line-height: 1.55;
-  }
-  .upgrade-tier-remaining {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--accent) 15%, transparent);
-    color: var(--accent);
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  .pl-plan-price { font-size: 16px; font-weight: 500; color: #2b2620; text-align: right; white-space: nowrap; }
+  .pl-plan-unit { font-size: 11px; color: #9a8a6c; margin-left: 3px; }
+  .pl-plan-cancel {
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 10px; color: #9a8a6c; margin-top: 4px; font-weight: 400;
     white-space: nowrap;
-    flex-shrink: 0;
   }
-  .upgrade-tier-remaining.full {
-    background: color-mix(in srgb, var(--red) 12%, transparent);
-    color: var(--red);
-    border-color: color-mix(in srgb, var(--red) 35%, transparent);
+  .pl-footer {
+    margin-top: 36px; padding-top: 24px;
+    border-top: 1px dashed #c9bfa6;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
   }
-  .upgrade-disclaimer {
-    margin-top: 14px;
-    padding: 10px 12px;
-    background: var(--bg3);
-    border-radius: 8px;
-    font-size: 11px;
-    color: var(--text3);
-    line-height: 1.55;
+  .pl-sig {
+    font-family: "Ma Shan Zheng", "Noto Serif TC", cursive;
+    font-size: 28px; color: #3a3225; line-height: 1;
   }
-  .upgrade-disclaimer b { color: var(--text2); }
+  .pl-sig-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: #9a8a6c;
+    letter-spacing: 0.1em; margin-top: 8px;
+  }
+  .pl-footer-right {
+    text-align: right;
+    font-family: "Noto Sans TC", sans-serif;
+    font-size: 11.5px; color: #7a6a52; line-height: 1.75;
+  }
+  .pl-footer-email { color: #a8946b; }
+  .pl-footer-link {
+    color: #c96442; text-decoration: underline; text-underline-offset: 3px;
+    cursor: pointer; background: none; border: none;
+    font-family: "Noto Sans TC", sans-serif; font-size: 11.5px; padding: 0;
+  }
+  @media (max-width: 600px) {
+    .pl-card { padding: 36px 24px 32px; }
+    .pl-greeting { font-size: 22px; }
+    .pl-plan { grid-template-columns: 1fr auto; gap: 6px; }
+    .pl-plan-feats { display: none; }
+  }
 
   /* ── Stats bar ── */
   .stats-bar {
@@ -1121,8 +1172,8 @@
     margin: 12px 0 6px;
   }
   .wall-section-label:first-of-type { margin-top: 0; }
-  .wall-add-label { color: var(--green); }
-  .wall-rem-label { color: var(--red); }
+  .wall-add-label { color: var(--red); }
+  .wall-rem-label { color: var(--green); }
 
   /* Stock card — colored left border, dark fill */
   .wall-stock-card {
@@ -1133,8 +1184,8 @@
     padding: 9px 12px;
     margin-bottom: 6px;
   }
-  .wall-stock-card-add { --wsc: var(--green); }
-  .wall-stock-card-rem { --wsc: var(--red);   }
+  .wall-stock-card-add { --wsc: var(--red); }
+  .wall-stock-card-rem { --wsc: var(--green);   }
 
   .wall-stock-name {
     font-size: 14px;
@@ -1228,8 +1279,8 @@
   .wall-etf-cost-unit {
     margin-left: 3px;
   }
-  .wall-shares-add { color: var(--green); }
-  .wall-shares-rem { color: var(--red);   }
+  .wall-shares-add { color: var(--red); }
+  .wall-shares-rem { color: var(--green);   }
   .wall-etf-cost-block {
     display: inline-flex;
     flex-direction: column;
@@ -1421,8 +1472,8 @@
     font-weight: 700;
     margin-left: auto;
   }
-  .consensus-total.pos { color: var(--green); }
-  .consensus-total.neg { color: var(--red);   }
+  .consensus-total.pos { color: #c8b888; }
+  .consensus-total.neg { color: #c8b888; }
   .consensus-etf-list {
     display: flex;
     flex-direction: column;
@@ -1443,8 +1494,8 @@
     font-weight: 700;
     margin-left: auto;
   }
-  .consensus-etf-delta.pos { color: var(--green); }
-  .consensus-etf-delta.neg { color: var(--red);   }
+  .consensus-etf-delta.pos { color: #c8b888; }
+  .consensus-etf-delta.neg { color: #c8b888; }
 
   .history-etf-tabs {
     display: flex;
@@ -1527,8 +1578,8 @@
     font-family: var(--mono);
     font-weight: 600;
   }
-  .cpill-add { background: rgba(63,185,80,0.15);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
-  .cpill-rem { background: rgba(248,81,73,0.15);  color: var(--red);    border: 1px solid rgba(248,81,73,0.3); }
+  .cpill-add { background: rgba(224,106,64,0.15);  color: var(--red);    border: 1px solid rgba(224,106,64,0.3); }
+  .cpill-rem { background: rgba(63,185,80,0.15);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
   .cpill-chg { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
 
   .change-body { padding: 20px; }
@@ -1542,8 +1593,8 @@
     margin-top: 20px;
   }
   .cs-label:first-child { margin-top: 0; }
-  .cs-label-add  { color: var(--green); }
-  .cs-label-rem  { color: var(--red); }
+  .cs-label-add  { color: var(--red); }
+  .cs-label-rem  { color: var(--green); }
   .cs-label-chg  { color: var(--accent); }
   .cs-label-hold { color: var(--text3); }
 
@@ -1559,10 +1610,10 @@
     padding: 11px 14px;
     border-left: 3px solid transparent;
   }
-  .ci-card-add { border-color: var(--green); }
-  .ci-card-rem { border-color: var(--red);   opacity: 0.7; }
-  .ci-card-up  { border-color: var(--green); }
-  .ci-card-dn  { border-color: #fb923c; }
+  .ci-card-add { border-color: var(--red); }
+  .ci-card-rem { border-color: var(--green);   opacity: 0.7; }
+  .ci-card-up  { border-color: var(--red); }
+  .ci-card-dn  { border-color: var(--green); }
   .ci-card-flat{ border-color: var(--text3); }
 
   .ci-ticker {
@@ -1583,8 +1634,8 @@
     font-weight: 700;
     letter-spacing: 0.3px;
   }
-  .ci-badge-new { background: rgba(63,185,80,0.2);  color: var(--green); }
-  .ci-badge-out { background: rgba(248,81,73,0.2);  color: var(--red); }
+  .ci-badge-new { background: rgba(224,106,64,0.2);  color: var(--red); }
+  .ci-badge-out { background: rgba(63,185,80,0.2);  color: var(--green); }
   .ci-reason {
     font-size: 11px;
     color: var(--text3);
@@ -1630,7 +1681,7 @@
     font-weight: 600;
     color: var(--accent);
   }
-  .ha-ticker.new-c { color: var(--green); }
+  .ha-ticker.new-c { color: var(--red); }
   .ha-name  { font-size: 11px; color: var(--text2); margin: 2px 0 4px; }
   .ha-weight {
     font-family: var(--mono);
@@ -1655,8 +1706,8 @@
     top: 6px; right: 8px;
     font-size: 9px;
     padding: 1px 5px;
-    background: rgba(63,185,80,0.2);
-    color: var(--green);
+    background: rgba(224,106,64,0.2);
+    color: var(--red);
     border-radius: 3px;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -1789,10 +1840,16 @@
     animation: founder-glow 0.85s ease 2;
     animation-delay: 0.35s;
   }
+  @keyframes pro-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0);       border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+    50%       { box-shadow: 0 0 7px 3px rgba(212,175,55,0.55); border-color: #d4af37; }
+  }
   .tier-badge-pro {
     background: color-mix(in srgb, var(--accent) 18%, var(--bg2));
     color: var(--accent);
     border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    animation: pro-glow 0.85s ease 2;
+    animation-delay: 0.35s;
   }
   @media (max-width: 640px) {
     .btn-upgrade-cta { padding: 5px 8px; font-size: 11px; }
@@ -1871,7 +1928,7 @@
     cursor: pointer; padding: 4px 8px; border-radius: 6px;
     transition: color 0.2s, background 0.2s; flex-shrink: 0;
   }
-  .btn-delete-note:hover { color: var(--red); background: rgba(248,81,73,0.1); }
+  .btn-delete-note:hover { color: var(--red); background: rgba(224,106,64,0.1); }
   .notes-empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
   .notes-section-title {
     font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
@@ -2425,15 +2482,31 @@
 </div><!-- end page-communityurl -->
 
 <!-- ── Upgrade Modal ── -->
-<div id="upgradeModal" class="upgrade-modal-backdrop" style="display:none"
+<div id="upgradeModal" class="pl-backdrop" style="display:none"
      onclick="if(event.target===this)closeUpgradeModal()">
-  <div class="upgrade-modal">
-    <div class="upgrade-modal-header">
-      <span class="upgrade-modal-title" id="upgradeModalTitle">升級會員</span>
-      <button class="upgrade-modal-close" onclick="closeUpgradeModal()" aria-label="關閉">×</button>
+  <div class="pl-card">
+    <button class="pl-close" onclick="closeUpgradeModal()" aria-label="關閉">✕</button>
+    <div class="pl-meta">一封給看到這裡的你 · LETTER №.03</div>
+    <h1 class="pl-greeting">嗨，謝謝你願意<br>看到付費這一頁。</h1>
+    <div class="pl-body">
+      這個 ETF 分析工具的開發花了不少心血，我希望統整所有資訊在五頁以內，
+      原本只是想縮短自己分析的時間，沒想到有人真的在用。
+      <br><br>
+      當日資訊、基礎功能會一直免費，這裡不給建議也不報明牌，
+      訂閱只是讓我有底氣繼續開發新工具，不用煩惱伺服器明天要不要關掉。
+      價格我想了很久，希望它便宜到你不用考慮太久，
+      又能讓我繼續寫下去——
     </div>
-    <div class="upgrade-modal-body" id="upgradeModalBody">
+    <div class="pl-plans" id="plPlans">
       <!-- populated by showUpgradeModal() -->
+    </div>
+    <div class="pl-footer">
+      <div class="pl-sig">——&nbsp;Liu
+        <div class="pl-sig-meta">RYAN LIU · 新竹 · 2026</div>
+      </div>
+      <div class="pl-footer-right" id="plFooterRight">
+        <!-- populated by showUpgradeModal() -->
+      </div>
     </div>
   </div>
 </div>
@@ -2446,6 +2519,7 @@
       <div class="portfolio-modal-title">設定我想追蹤</div>
       <button class="portfolio-modal-close" onclick="closePortfolioModal()">×</button>
     </div>
+    <div id="pmCardTabBar" class="pm-card-tab-bar" style="display:none"></div>
     <div class="portfolio-modal-body">
       <div class="portfolio-search-wrap">
         <input class="portfolio-input" id="modalInput"
@@ -2563,7 +2637,7 @@ function renderETFCards() {
       <div class="etf-group">
         <div class="active-group-header">
           <div class="etf-group-title">主動式卡片</div>
-          <div class="active-group-tabs">${tabsHtml}</div>
+          <div class="active-group-tabs">${tabsHtml}<span id="intersectionLimitHint" onclick="showUpgradeModal('intersection')">已達上限</span></div>
         </div>
         <div class="etf-cards">
           ${portfolioCardHtml()}
@@ -2675,9 +2749,18 @@ function getFilteredSorted() {
 }
 
 function renderTable() {
-  const rows = getFilteredSorted();
   const tbody = document.getElementById('tableBody');
   expandedRow = null;
+
+  const minCovCheck = parseInt(document.getElementById('minCoverage').value);
+  const activeCount = activeFilters.size;
+  if (activeCount > 0 && activeCount < minCovCheck) {
+    tbody.innerHTML = `<tr><td colspan="9" class="no-results">請再勾選 ${minCovCheck - activeCount} 張卡片（目前已選 ${activeCount} 張，條件需 ${minCovCheck} 張）</td></tr>`;
+    renderStats([]);
+    return;
+  }
+
+  const rows = getFilteredSorted();
 
   if (rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" class="no-results">查無符合條件的成分股</td></tr>`;
@@ -2688,11 +2771,12 @@ function renderTable() {
   tbody.innerHTML = rows.map((r, i) => {
     const isMyStock = myPortfolio.has(r.ticker);
 
-    const dots = r.etfs.map(e =>
+    const visibleEtfs = activeFilters.size > 0 ? r.etfs.filter(e => activeFilters.has(e.etf_ticker)) : r.etfs;
+
+    const dots = visibleEtfs.map(e =>
       `<div class="dot" style="background:${e.color}" title="${e.etf_ticker} ${e.etf_name}"></div>`
     ).join('');
-
-    const pills = r.etfs.map(e => `
+    const pills = visibleEtfs.map(e => `
       <span class="etf-pill"
             style="color:${e.color};border-color:color-mix(in srgb,${e.color} 40%,transparent);background:color-mix(in srgb,${e.color} 12%,transparent)">
         ${e.etf_ticker} ${e.weight.toFixed(2)}%
@@ -2707,7 +2791,7 @@ function renderTable() {
         <td class="td-name"><a class="stock-link" href="https://www.wantgoo.com/stock/${r.ticker}/technical-chart" target="_blank" rel="noopener" onclick="event.stopPropagation()">${r.name}</a>${isMyStock ? '<span class="portfolio-badge">追蹤</span>' : ''}</td>
         <td><span class="industry-tag">${industry}</span></td>
         <td>
-          <div class="dot-row">${dots}<span style="font-family:var(--mono);font-size:13px;margin-left:4px;color:var(--text2)">${r.etf_count}</span></div>
+          <div class="dot-row">${dots}<span style="font-family:var(--mono);font-size:13px;margin-left:4px;color:var(--text2)">${visibleEtfs.length}</span></div>
         </td>
         <td class="td-num" style="color:var(--accent)">${r.max_weight.toFixed(2)}%</td>
         <td class="td-num" style="color:var(--gold)">${r.total_capital.toFixed(0)}</td>
@@ -2720,6 +2804,7 @@ function renderTable() {
     `;
   }).join('');
 
+  expandedRow = null;
   renderStats(rows);
 
   document.querySelectorAll('thead th[data-col]').forEach(th => {
@@ -2752,7 +2837,8 @@ function toggleExpand(idx, ticker) {
   const row = CROSS_DATA.find(r => r.ticker === ticker);
   if (!row) return;
 
-  const inner = row.etfs.map(e => `
+  const visibleEtfs = activeFilters.size > 0 ? row.etfs.filter(e => activeFilters.has(e.etf_ticker)) : row.etfs;
+  const inner = visibleEtfs.map(e => `
     <div class="expand-card" style="--ec-color:${e.color}">
       <div class="ec-ticker">${e.etf_ticker}</div>
       <div class="ec-name">${e.etf_name}</div>
@@ -2786,6 +2872,8 @@ function getTopHoldings(ticker, n = 5) {
 
 function renderAIFeedback() {
   const panel = document.getElementById('ai-feedback-panel');
+  panel.innerHTML = '';
+  return;
   const etfs  = [...activeFilters].filter(t => t !== 'MY_PORTFOLIO').reverse();
   if (!etfs.length) { panel.innerHTML = ''; return; }
 
@@ -2825,9 +2913,23 @@ function canAddIntersection(ticker) {
   return activeFilters.size < CARD_INTERSECTION_LIMIT;   // visitor / member = 5 max
 }
 
+let _limitHintTimer = null;
+function showIntersectionLimitHint() {
+  const el = document.getElementById('intersectionLimitHint');
+  if (!el) return;
+  clearTimeout(_limitHintTimer);
+  el.classList.remove('hide');
+  el.classList.add('show');
+  _limitHintTimer = setTimeout(() => {
+    el.classList.remove('show');
+    el.classList.add('hide');
+    setTimeout(() => { el.classList.remove('hide'); }, 400);
+  }, 3000);
+}
+
 function toggleETFFilter(ticker) {
   if (!canAddIntersection(ticker)) {
-    if (typeof showUpgradeModal === 'function') showUpgradeModal('intersection');
+    showIntersectionLimitHint();
     return;
   }
   const card = document.getElementById(`card-${ticker}`);
@@ -2906,13 +3008,13 @@ function renderHistoryWall(mode = '') {
           ? `<div class="wall-etf-shares-block">
               <span class="wall-etf-shares-big ${sharesClass}">${sign}${e.shares_zhang.toLocaleString()}<span class="wall-etf-shares-unit">張</span></span>
               ${e.latest_shares_label
-                ? `<span class="wall-etf-shares-current">(${e.latest_shares_label} : ${e.latest_shares_zhang != null ? e.latest_shares_zhang.toLocaleString() + '張' : '平倉'})</span>`
+                ? `<span class="wall-etf-shares-current">${e.latest_shares_zhang != null ? `(${e.latest_shares_label}握有${e.latest_shares_zhang.toLocaleString()}張)` : `(${e.latest_shares_label} 平倉)`}</span>`
                 : ''}
             </div>`
           : ''}
         <div class="wall-etf-numbers-right">
           ${e.cost_str
-            ? `<div class="wall-etf-cost-block"><span class="wall-etf-cost">${e.cost_str.value}<span class="wall-etf-cost-unit">${e.cost_str.unit}</span></span><span class="wall-etf-cost-tag">(${s.entry_low_label} 最低成本)</span></div>`
+            ? `<div class="wall-etf-cost-block"><span class="wall-etf-cost">${e.cost_str.value}<span class="wall-etf-cost-unit">${e.cost_str.unit}</span></span><span class="wall-etf-cost-tag">(當日低估算)</span></div>`
             : ''}
           ${s.entry_low != null
             ? `<div class="wall-etf-price-block"><span class="wall-etf-price">${s.entry_low}</span><span class="wall-etf-price-tag">(當日低)</span></div>`
@@ -3204,7 +3306,7 @@ function renderAdded(items) {
     <div class="ci-grid">
       ${items.map(item => `
         <div class="ci-card ci-card-add">
-          <div class="ci-ticker" style="color:var(--green)">
+          <div class="ci-ticker" style="color:var(--red)">
             <a class="stock-link" href="https://www.wantgoo.com/stock/${item.ticker}/technical-chart" target="_blank" rel="noopener">${item.ticker}</a><span class="ci-badge ci-badge-new">NEW</span>
           </div>
           <div class="ci-name"><a class="stock-link" href="https://www.wantgoo.com/stock/${item.ticker}/technical-chart" target="_blank" rel="noopener">${item.name}</a></div>
@@ -3224,7 +3326,7 @@ function renderRemoved(items) {
     <div class="ci-grid">
       ${items.map(item => `
         <div class="ci-card ci-card-rem">
-          <div class="ci-ticker" style="color:var(--red)">
+          <div class="ci-ticker" style="color:var(--green)">
             <a class="stock-link" href="https://www.wantgoo.com/stock/${item.ticker}/technical-chart" target="_blank" rel="noopener">${item.ticker}</a><span class="ci-badge ci-badge-out">OUT</span>
           </div>
           <div class="ci-name"><a class="stock-link" href="https://www.wantgoo.com/stock/${item.ticker}/technical-chart" target="_blank" rel="noopener">${item.name}</a></div>
@@ -3269,7 +3371,7 @@ function renderChanged(items) {
         const sharesDiff = fromShares && toShares ? (toShares - fromShares) : null;
         const sharesDir = sharesDiff ? (sharesDiff >= 0 ? '+' : '') : '';
         const noShareChange = sharesDiff === null || sharesDiff === 0;
-        const clr = noShareChange ? 'var(--text3)' : (up ? 'var(--green)' : '#fb923c');
+        const clr = noShareChange ? 'var(--text3)' : (up ? 'var(--red)' : 'var(--green)');
         const cardCls = noShareChange ? 'ci-card-flat' : (up ? 'ci-card-up' : 'ci-card-dn');
         return `
           <div class="ci-card ${cardCls}">
@@ -3309,7 +3411,7 @@ function renderHoldingsAfter(holdings, etfColor) {
             <div class="ha-weight">${h.weight.toFixed(2)}%</div>
             <div class="ha-bar">
               <div class="ha-bar-fill"
-                   style="width:${(h.weight/maxW*100).toFixed(1)}%;background:${h.new ? 'var(--green)' : etfColor}"></div>
+                   style="width:${(h.weight/maxW*100).toFixed(1)}%;background:${h.new ? 'var(--red)' : etfColor}"></div>
             </div>
           </div>
         `).join('')}
@@ -3430,6 +3532,9 @@ const PORTFOLIO_KEY            = 'etf_my_portfolio_v1';
 const PORTFOLIO_LIMIT_VISITOR  = 3;
 const PORTFOLIO_LIMIT_MEMBER   = 10;
 const PORTFOLIO_LIMIT_PAID     = 50;
+const CARDS_COUNT              = 5;
+const CARDS_LIMIT_PER_CARD     = 10;
+const CARD_NAMES_DEFAULT       = ['卡片一', '卡片二', '卡片三', '卡片四', '卡片五'];
 const CARD_INTERSECTION_LIMIT  = 5;   // visitor/member 上限; founder/pro 無限
 
 // Backward-compat aliases
@@ -3486,99 +3591,72 @@ function renderUpgradeButtons() {
 }
 
 // ── Upgrade Modal ───────────────────────────────────────────────────────
-const UPGRADE_CONTEXTS = {
-  cta:          { icon: '✦', title: '升級會員',           sub: '解鎖完整 ETF 分析功能' },
-  timeline:     { icon: '📅', title: '查看完整歷史異動',   sub: '6 日前的 ETF 異動記錄僅付費會員可見' },
-  shifting:     { icon: '📊', title: '查看完整權重輪動',   sub: '6 日前的產業權重資料僅付費會員可見' },
-  intersection: { icon: '🎯', title: '無限卡片交集分析',   sub: '同時選擇 6+ 張卡片進行交集需付費會員' },
-  tracking:     { icon: '📌', title: '擴充追蹤上限',       sub: '升級後可追蹤 50 檔個股' },
-};
+const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28490004&is_free_trial=true';
+const PATREON_PRO_URL     = 'https://www.patreon.com/checkout/etfcross?rid=28498975&is_free_trial=true';
 
 async function showUpgradeModal(context) {
-  // Already paid? No need
   if (isPaidTier()) return;
 
   const modal = document.getElementById('upgradeModal');
-  const titleEl = document.getElementById('upgradeModalTitle');
-  const bodyEl  = document.getElementById('upgradeModalBody');
-  if (!modal || !bodyEl) return;
+  const plansEl = document.getElementById('plPlans');
+  const footerRightEl = document.getElementById('plFooterRight');
+  if (!modal || !plansEl) return;
 
-  const ctx = UPGRADE_CONTEXTS[context] || UPGRADE_CONTEXTS.cta;
-  if (titleEl) titleEl.textContent = ctx.title;
+  const userEmail = window._etfAuth?.user?.email || '';
+  if (footerRightEl) footerRightEl.innerHTML = `
+    訂閱在 Patreon 完成<br>
+    ${userEmail ? `<span class="pl-footer-email">用 ${userEmail}</span><br>` : ''}
+    <a href="javascript:void(0)" onclick="_relinkPatreon()" class="pl-footer-link">已經訂了？手動綁定 →</a>
+  `;
 
-  // Initial render (without slot data)
-  const renderBody = (config) => {
+  const renderPlans = (config) => {
     const founderRem = config ? Math.max(0, (config.foundersMax || 500) - (config.foundersCount || 0)) : null;
     const proRem     = config ? Math.max(0, (config.proMax     || 1500) - (config.proCount     || 0)) : null;
     const founderFull = founderRem === 0;
     const proFull     = proRem === 0;
 
-    const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28490004&is_free_trial=true';
-    const PATREON_PRO_URL     = 'https://www.patreon.com/checkout/etfcross?rid=28498975&is_free_trial=true';
-    const founderClickAttr = founderFull
-      ? ''
-      : `onclick="window.open('${PATREON_FOUNDER_URL}', '_blank', 'noopener')"`;
-    const proClickAttr = proFull
-      ? ''
-      : `onclick="window.open('${PATREON_PRO_URL}', '_blank', 'noopener')"`;
-    const userEmail = window._etfAuth?.user?.email || '';
+    const plans = [
+      {
+        id: 'founder', name: '創始會員',
+        note: founderRem !== null
+          ? (founderFull ? '名額已滿' : `限早鳥 · 剩 ${founderRem} 名`)
+          : '限 500 名伯樂<br>永久不漲價',
+        features: ['支持伺服器與雲端空間的費用', '解鎖所有軟體進階功能','(無限卡片交集 / 追蹤 50 檔 / 完整歷史異動)','含未來所有新功能'],
+        price: 5, unit: 'USD / 月', url: PATREON_FOUNDER_URL, full: founderFull,
+      },
+      {
+        id: 'pro', name: 'Pro會員',
+        note: '',
+        features: ['(尚未開放)'],
+        price: 9, unit: 'USD / 月', url: PATREON_PRO_URL, full: proFull,
+      },
+    ];
 
-    return `
-      <div class="upgrade-intro">
-        <div class="upgrade-intro-icon">${ctx.icon}</div>
-        <div class="upgrade-intro-title">${ctx.title}</div>
-        <div class="upgrade-intro-sub">${ctx.sub}</div>
-      </div>
-
-      <div class="upgrade-tier-card founder ${founderFull ? 'locked' : ''}" ${founderClickAttr}>
-        <div class="upgrade-tier-icon">🌱</div>
-        <div class="upgrade-tier-info">
-          <div class="upgrade-tier-name upgrade-tier-founder-color">Founder 創始會員</div>
-          <div class="upgrade-tier-price">$5 USD<small>/ 月（限早鳥 500 名）</small></div>
-          <div class="upgrade-tier-desc">追蹤 50 檔 · 無限卡片交集 · 全部歷史資料</div>
+    return plans.map(p => `
+      <button class="pl-plan${p.full ? ' full' : ''}"
+              ${p.full ? '' : `onclick="window.open('${p.url}', '_blank', 'noopener')"`}>
+        <div>
+          <div class="pl-plan-name">${p.name}</div>
+          <div class="pl-plan-note">${p.note}</div>
         </div>
-        ${founderRem !== null ? `<span class="upgrade-tier-remaining ${founderFull ? 'full' : ''}">${founderFull ? '名額已滿' : '剩 ' + founderRem + ' 名'}</span>` : ''}
-      </div>
-
-      <div class="upgrade-tier-card pro ${proFull ? 'locked' : ''}" ${proClickAttr}>
-        <div class="upgrade-tier-icon">⚡</div>
-        <div class="upgrade-tier-info">
-          <div class="upgrade-tier-name upgrade-tier-pro-color">Pro 會員</div>
-          <div class="upgrade-tier-price">$9 USD<small>/ 月（限 1500 名）</small></div>
-          <div class="upgrade-tier-desc">追蹤 50 檔 · 無限卡片交集 · 全部歷史資料</div>
-        </div>
-        ${proRem !== null ? `<span class="upgrade-tier-remaining ${proFull ? 'full' : ''}">${proFull ? '名額已滿' : '剩 ' + proRem + ' 名'}</span>` : ''}
-      </div>
-
-      <div class="upgrade-disclaimer">
-        <b>訂閱步驟：</b>
-        <ol style="margin:6px 0 8px 18px;padding:0;line-height:1.7">
-          <li>點上方方案 → 開啟 Patreon 頁面 → 在 Patreon 完成訂閱</li>
-          <li>${userEmail
-              ? '<b>用同一個 email 訂閱</b>（你目前是 <span style="color:var(--text2);font-family:var(--mono);font-size:11px">' + userEmail + '</span>）'
-              : '<b>請先登入本站再訂閱</b>，並用相同 email 在 Patreon 訂閱'}</li>
-          <li>訂閱完成後回到本站 → <b>重新整理頁面</b>即自動解鎖（webhook 自動同步）</li>
-        </ol>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          已在 Patreon 訂閱但未自動解鎖？
-          <a href="javascript:void(0)" onclick="_relinkPatreon()" style="color:var(--accent);text-decoration:underline">手動綁定帳號 →</a>
-        </div>
-      </div>
-    `;
+        <div class="pl-plan-feats">${p.features.join('<br>')}</div>
+        <div class="pl-plan-price">${p.full
+          ? '<span style="font-size:13px;color:#9a8a6c">名額已滿</span>'
+          : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-cancel">7天內隨時可取消</div>`
+        }</div>
+      </button>
+    `).join('') + '<div class="pl-plan-div"></div>';
   };
 
-  // Show modal with loading state
-  bodyEl.innerHTML = renderBody(null);
+  plansEl.innerHTML = renderPlans(null);
   modal.style.display = 'flex';
 
-  // Fetch real-time slot counts
   if (typeof window._getPatreonConfig === 'function') {
     try {
       const config = await window._getPatreonConfig();
-      bodyEl.innerHTML = renderBody(config);
+      plansEl.innerHTML = renderPlans(config);
     } catch (err) {
       console.warn('Failed to fetch Patreon config:', err);
-      // Keep the initial render (without slot data)
     }
   }
 }
@@ -3641,6 +3719,7 @@ const STOCK_INDUSTRY = {};
 STOCK_LIST.forEach(([c, n, ind]) => { STOCK_NAME[c] = n; STOCK_INDUSTRY[c] = ind || ''; });
 
 let myPortfolio = new Set();
+let myCards = []; // [{ id, name, stocks: Set }] — paid members only
 
 function savePortfolio() {
   localStorage.setItem(PORTFOLIO_KEY, JSON.stringify([...myPortfolio]));
@@ -3665,7 +3744,7 @@ function restoreCardActiveStates() {
 function togglePortfolioFilter() {
   if (myPortfolio.size === 0) { openPortfolioModal(); return; }
   if (!canAddIntersection('MY_PORTFOLIO')) {
-    if (typeof showUpgradeModal === 'function') showUpgradeModal('intersection');
+    showIntersectionLimitHint();
     return;
   }
   const card = document.getElementById('card-MY_PORTFOLIO');
@@ -3684,10 +3763,27 @@ function togglePortfolioFilter() {
 
 // ── Portfolio Modal ───────────────────────────────────────────────────────
 let _tempPortfolio = new Set();
+let _tempCards = [];
+let _tempActiveCardIdx = 0;
 let _ddItems = [], _ddIdx = -1;
 
 function openPortfolioModal() {
-  _tempPortfolio = new Set(myPortfolio);
+  if (isPaidTier()) {
+    if (myCards.length === 0) {
+      // First open as paid: migrate existing stocks into card 0
+      _tempCards = CARD_NAMES_DEFAULT.map((name, i) => ({
+        name,
+        stocks: i === 0 ? new Set(myPortfolio) : new Set()
+      }));
+    } else {
+      _tempCards = myCards.map(c => ({ name: c.name, stocks: new Set(c.stocks) }));
+    }
+    _tempActiveCardIdx = 0;
+    _tempPortfolio = _tempCards[0].stocks;
+  } else {
+    _tempPortfolio = new Set(myPortfolio);
+  }
+  renderPaidCardTabs();
   const inp = document.getElementById('modalInput');
   inp.value = '';
   inp.disabled = false;
@@ -3701,17 +3797,73 @@ function closePortfolioModal() {
   document.getElementById('portfolioModal').style.display = 'none';
 }
 
+function renderPaidCardTabs() {
+  const bar = document.getElementById('pmCardTabBar');
+  if (!bar) return;
+  if (!isPaidTier()) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  bar.innerHTML = _tempCards.map((card, i) => `
+    <div class="pm-card-tab ${i === _tempActiveCardIdx ? 'active' : ''}"
+         onclick="switchModalCard(${i})">
+      <span class="pm-card-tab-name" ondblclick="startRenameTab(${i}, event)">${card.name}</span>
+    </div>`).join('');
+}
+
+async function switchModalCard(idx) {
+  if (idx === _tempActiveCardIdx) return;
+  _tempCards[_tempActiveCardIdx].stocks = new Set(_tempPortfolio);
+  _tempActiveCardIdx = idx;
+  _tempPortfolio = new Set(_tempCards[idx].stocks);
+  renderPaidCardTabs();
+  renderModalChips();
+  document.getElementById('modalInput').value = '';
+  document.getElementById('modalDropdown').classList.remove('show');
+  if (window._etfAuth?.user && window._firestore?.saveCardsToFirestore) {
+    window._firestore.saveCardsToFirestore(
+      window._etfAuth.user.uid, window._etfAuth.user.email, _tempCards
+    ).catch(e => console.error('Auto-save failed:', e));
+  }
+}
+
+function startRenameTab(idx, event) {
+  event.stopPropagation();
+  const bar = document.getElementById('pmCardTabBar');
+  const nameSpan = bar.querySelectorAll('.pm-card-tab')[idx]?.querySelector('.pm-card-tab-name');
+  if (!nameSpan) return;
+  const cur = _tempCards[idx].name;
+  nameSpan.innerHTML = `<input class="pm-tab-rename-input" value="${cur}" maxlength="8"
+    onblur="finishRenameTab(${idx}, this)"
+    onkeydown="if(event.key==='Enter'||event.key==='Escape')this.blur()"
+    onclick="event.stopPropagation()">`;
+  const input = nameSpan.querySelector('input');
+  input.focus(); input.select();
+}
+
+function finishRenameTab(idx, input) {
+  const name = input.value.trim() || CARD_NAMES_DEFAULT[idx];
+  _tempCards[idx].name = name;
+  renderPaidCardTabs();
+}
+
 async function savePortfolioModal() {
   const btn = document.getElementById('btnSavePortfolio');
   if (btn) btn.disabled = true;
 
   try {
-    myPortfolio = new Set(_tempPortfolio);
-    savePortfolio();
-
-    // Sync to Firestore if logged in and function is available
-    if (window._etfAuth?.user && window._firestore?.savePortfolioToFirestore) {
-      await window._firestore.savePortfolioToFirestore(window._etfAuth.user.uid, window._etfAuth.user.email);
+    if (isPaidTier()) {
+      _tempCards[_tempActiveCardIdx].stocks = new Set(_tempPortfolio);
+      myCards = _tempCards.map((c, i) => ({ id: i, name: c.name, stocks: new Set(c.stocks) }));
+      myPortfolio = new Set(myCards.flatMap(c => [...c.stocks]));
+      savePortfolio();
+      if (window._etfAuth?.user && window._firestore?.saveCardsToFirestore) {
+        await window._firestore.saveCardsToFirestore(window._etfAuth.user.uid, window._etfAuth.user.email, myCards);
+      }
+    } else {
+      myPortfolio = new Set(_tempPortfolio);
+      savePortfolio();
+      if (window._etfAuth?.user && window._firestore?.savePortfolioToFirestore) {
+        await window._firestore.savePortfolioToFirestore(window._etfAuth.user.uid, window._etfAuth.user.email);
+      }
     }
 
     if (activeFilters.has('MY_PORTFOLIO') && myPortfolio.size === 0) activeFilters.delete('MY_PORTFOLIO');
@@ -3736,7 +3888,7 @@ function handleSavePortfolio() {
 function renderModalChips() {
   const wrap  = document.getElementById('modalChips');
   if (!wrap) return;
-  const limit   = getTrackingLimit();
+  const limit   = isPaidTier() ? CARDS_LIMIT_PER_CARD : getTrackingLimit();
   const isFull  = _tempPortfolio.size >= limit;
   const inp     = document.getElementById('modalInput');
   if (inp) inp.disabled = isFull;
@@ -3835,7 +3987,7 @@ function onPortfolioKeydown(e) {
 function selectModalItem(i) {
   const [code] = _ddItems[i];
   if (!_tempPortfolio.has(code)) {
-    if (_tempPortfolio.size >= getTrackingLimit()) return;
+    if (_tempPortfolio.size >= (isPaidTier() ? CARDS_LIMIT_PER_CARD : getTrackingLimit())) return;
     _tempPortfolio.add(code);
     renderModalChips();
   }
@@ -4248,7 +4400,17 @@ renderHistoryWall('add');
 
       if (snap.exists()) {
         const data = snap.data();
-        myPortfolio = new Set(data.stocks || []);
+        if (data.cards && data.cards.length > 0) {
+          myCards = data.cards.map((c, i) => ({
+            id: i,
+            name: c.name || CARD_NAMES_DEFAULT[i],
+            stocks: new Set(c.stocks || [])
+          }));
+          myPortfolio = new Set(myCards.flatMap(c => [...c.stocks]));
+        } else {
+          myCards = [];
+          myPortfolio = new Set(data.stocks || []);
+        }
         console.log('✓ Loaded portfolio from Firestore:', [...myPortfolio]);
       } else {
         // New user: check localStorage and migrate
@@ -4292,10 +4454,29 @@ renderHistoryWall('add');
     }
   }
 
+  async function saveCardsToFirestore(uid, email, cards) {
+    try {
+      const docRef = doc(db, 'dev_portfolios', uid);
+      const cardsData = cards.map(c => ({ name: c.name, stocks: [...c.stocks] }));
+      const stocksUnion = [...new Set(cards.flatMap(c => [...c.stocks]))];
+      await setDoc(docRef, {
+        stocks: stocksUnion,
+        cards: cardsData,
+        email: email || '',
+        updatedAt: new Date()
+      });
+      console.log('✓ Saved cards to Firestore');
+    } catch(err) {
+      console.error('❌ Failed to save cards to Firestore:', err);
+      throw err;
+    }
+  }
+
   // Expose Firestore functions to global scope for other scripts
   window._firestore = {
     loadUserPortfolio,
-    savePortfolioToFirestore
+    savePortfolioToFirestore,
+    saveCardsToFirestore
   };
 
   // ── Auth state ───────────────────────────────────────────────────────────
