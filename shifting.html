@@ -114,6 +114,10 @@
     font-weight: 500;
     text-decoration: none;
   }
+  .auth-area > .tab-btn {
+    padding-left: 8px;
+    padding-right: 10px;
+  }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active {
     color: var(--accent);
@@ -966,11 +970,23 @@
     border-top: 1px solid var(--border);
     margin: 14px 0 10px;
   }
+  .wall-rem-section,
+  .wall-inner-sep {
+    opacity: 0;
+  }
   .wall-no-change {
     font-size: 11px;
     color: var(--text3);
     padding: 8px 4px;
     text-align: center;
+  }
+  @keyframes wall-group-in {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes wall-add-in {
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .history-wall-h {
     display: flex;
@@ -1322,10 +1338,16 @@
     margin-bottom: 24px;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   .weight-date-row::-webkit-scrollbar { height: 4px; }
   .weight-date-row::-webkit-scrollbar-track { background: transparent; }
   .weight-date-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  @keyframes weight-btn-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
   .weight-date-btn {
     flex-shrink: 0;
     font-family: var(--mono);
@@ -1677,12 +1699,15 @@
     align-items: center;
     gap: 0;
     padding: 0;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }
   #authArea {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 8px 8px 4px;
+    padding: 8px 8px 8px 10px;
   }
   .btn-login {
     display: flex;
@@ -1753,10 +1778,16 @@
     font-family: var(--mono);
     white-space: nowrap;
   }
+  @keyframes founder-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0);    border-color: color-mix(in srgb, #3fb950 40%, transparent); }
+    50%       { box-shadow: 0 0 7px 3px rgba(212,175,55,0.55); border-color: #d4af37; }
+  }
   .tier-badge-founder {
     background: color-mix(in srgb, #3fb950 18%, var(--bg2));
     color: #3fb950;
     border: 1px solid color-mix(in srgb, #3fb950 40%, transparent);
+    animation: founder-glow 0.85s ease 2;
+    animation-delay: 0.35s;
   }
   .tier-badge-pro {
     background: color-mix(in srgb, var(--accent) 18%, var(--bg2));
@@ -2835,7 +2866,7 @@ const CONSENSUS_TAB_KEY = '__consensus__';
 let activeHistoryETF = CONSENSUS_TAB_KEY;                // 預設選共識
 let activeWeightDate = WEIGHT_ANALYSIS_DATES[0] || '';   // shifting 頁日期 button row 預設最新
 
-function renderHistoryWall() {
+function renderHistoryWall(mode = '') {
   const container = document.getElementById('historyWall');
   if (!container) return;
   if (!WALL_DATA.length) {
@@ -2899,7 +2930,17 @@ function renderHistoryWall() {
       ? stocks.flatMap(s => s.etfs.map(e => renderEtfCard(s, e, cardClass, sign, sharesClass))).join('')
       : `<div class="wall-no-change">${emptyMsg}</div>`}`;
 
-  const groupsHtml = [...visibleData].reverse().map(g => `
+  const wallOffset   = hiddenCount > 0 ? 1 : 0;
+  const totalGroups  = visibleData.length + wallOffset;
+  // Newest group (highest display index) gets delay 0; older groups follow
+  const animStyle    = (displayIdx) => mode === 'rem'
+    ? ` style="animation: wall-group-in 0.3s ease both; animation-delay: ${(totalGroups - 1 - displayIdx) * 45}ms"`
+    : '';
+  const addAnimStyle = (displayIdx) => mode === 'add'
+    ? ` style="animation: wall-add-in 0.3s ease both; animation-delay: ${(totalGroups - 1 - displayIdx) * 45}ms"`
+    : '';
+
+  const groupsHtml = [...visibleData].reverse().map((g, i) => `
     <div class="wall-group">
       <div class="wall-group-date">
         <div class="wgd-range">
@@ -2909,11 +2950,11 @@ function renderHistoryWall() {
           <span class="wgd-dow-inline">${wallDow(g.to_label)}</span>
         </div>
       </div>
-      <div class="wall-add-section">
+      <div class="wall-add-section"${addAnimStyle(i + wallOffset)}>
         ${renderSection(g.added_stocks,   'wall-stock-card-add', '+', 'wall-shares-add', 'wall-add-label', '▲ 新增入列', '今日無新增')}
       </div>
-      <hr class="wall-inner-sep">
-      <div class="wall-rem-section">
+      <hr class="wall-inner-sep"${animStyle(i + wallOffset)}>
+      <div class="wall-rem-section"${animStyle(i + wallOffset)}>
         <div class="wall-group-date">
           <div class="wgd-range">
             <span class="wgd-from">${g.from_label}</span>
@@ -2964,7 +3005,7 @@ function _getShiftingVisibleDates() {
   return [...WEIGHT_ANALYSIS_DATES].reverse().filter(d => latest5Set.has(d));
 }
 
-function renderWeightDateRow() {
+function renderWeightDateRow(animate = false) {
   const container = document.getElementById('weightDateRow');
   if (!container) return;
   const visibleDates = _getShiftingVisibleDates();
@@ -2975,14 +3016,19 @@ function renderWeightDateRow() {
     activeWeightDate = visibleDates[visibleDates.length - 1];
   }
 
+  const animStyle = (i) => animate
+    ? ` style="animation: weight-btn-in 0.25s ease both; animation-delay: ${i * 8}ms"`
+    : '';
+
   const lockedBtn = hiddenCount > 0 ? `
-    <button class="weight-date-btn weight-date-btn-locked"
+    <button class="weight-date-btn weight-date-btn-locked"${animStyle(0)}
             onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('shifting')"
             title="更早的 ${hiddenCount} 個交易日僅付費會員可見">🔒 +${hiddenCount}</button>
   ` : '';
 
-  container.innerHTML = lockedBtn + visibleDates.map(d => `
-    <button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}"
+  const offset = hiddenCount > 0 ? 1 : 0;
+  container.innerHTML = lockedBtn + visibleDates.map((d, i) => `
+    <button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}"${animStyle(i + offset)}
             onclick="selectWeightDate('${d}')">${d}</button>
   `).join('');
   requestAnimationFrame(() => {
@@ -3580,8 +3626,13 @@ window.onAuthChanged = () => {
   renderETFCards();
   renderModalChips();
   if (typeof renderUpgradeButtons === 'function') renderUpgradeButtons();
-  if (typeof renderHistoryWall === 'function') renderHistoryWall();
-  if (typeof renderWeightDateRow === 'function') renderWeightDateRow();
+  if (typeof renderHistoryWall === 'function') renderHistoryWall('rem');
+  if (typeof renderWeightDateRow === 'function') renderWeightDateRow(true);
+  // Reveal after auth + Patreon are both resolved — eliminates flash of unauthenticated state
+  const authAreaContainer = document.querySelector('.auth-area');
+  if (authAreaContainer) { authAreaContainer.style.opacity = '1'; authAreaContainer.style.transform = 'translateX(0)'; }
+  const weightDateRow = document.getElementById('weightDateRow');
+  if (weightDateRow) weightDateRow.style.opacity = '1';
 };
 
 // Build code→name/industry lookup once
@@ -3802,7 +3853,7 @@ renderUpgradeButtons();
 if (HISTORY_DATA.length > 0) {
   updateHistoryDesc();
 }
-renderWeightDateRow();
+renderWeightDateRow(true);
 renderHistoryETFTabs();
 renderHistoryContent();
 updateHistoryDesc();
