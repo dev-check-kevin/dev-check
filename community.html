@@ -3507,7 +3507,10 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
     document.getElementById('userInfoClickable').addEventListener('click', () =>
       openCombinedModal(user, { startTab: ANN_VERSION ? 'tos-ann' : 'tos-terms', force: true })
     );
-    document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
+    document.getElementById('btnLogout').addEventListener('click', async () => {
+      try { await window.fcmUnsubscribe?.(); } catch (e) { console.warn('logout unsubscribe failed', e); }
+      signOut(auth);
+    });
   }
 
   function renderLoggedOut() {
@@ -3771,6 +3774,9 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   }
 
   btn.addEventListener('click', () => { isSubscribed() ? unsubscribe() : subscribe(); });
+
+  // 暴露給 auth script 在登出前自動取消訂閱
+  window.fcmUnsubscribe = unsubscribe;
 
   onMessage(messaging, (payload) => {
     const title = payload.data?.title || payload.notification?.title || 'ETF 通知';
