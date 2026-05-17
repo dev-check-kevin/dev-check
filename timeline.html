@@ -4063,30 +4063,6 @@ document.addEventListener('keydown', e => {
   const el = document.getElementById('historyWall');
   if (!el) return;
 
-  // 觸控裝置保持原生滑動，不掛 wheel listener
-  if (!('ontouchstart' in window)) {
-    let targetX = el.scrollLeft, rafId = null;
-    function smoothStep() {
-      const diff = targetX - el.scrollLeft;
-      if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
-      el.scrollLeft += diff * 0.06;
-      rafId = requestAnimationFrame(smoothStep);
-    }
-    el.addEventListener('wheel', e => {
-      if (e.deltaY === 0 || Math.abs(e.deltaX) > 0) return;
-      e.preventDefault();
-      if (!rafId) targetX = el.scrollLeft;
-      targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
-      if (!rafId) rafId = requestAnimationFrame(smoothStep);
-    }, { passive: false });
-  }
-
-})();
-
-// ── Shifting date row horizontal scroll ───────────────────────────────────
-(function() {
-  const el = document.getElementById('weightDateRow');
-  if (!el || ('ontouchstart' in window)) return;
   let targetX = el.scrollLeft, rafId = null;
   function smoothStep() {
     const diff = targetX - el.scrollLeft;
@@ -4096,7 +4072,28 @@ document.addEventListener('keydown', e => {
   }
   el.addEventListener('wheel', e => {
     if (e.deltaY === 0 || Math.abs(e.deltaX) > 0) return;
-    e.preventDefault();
+    e.preventDefault(); e.stopPropagation();
+    if (!rafId) targetX = el.scrollLeft;
+    targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
+    if (!rafId) rafId = requestAnimationFrame(smoothStep);
+  }, { passive: false });
+
+})();
+
+// ── Shifting date row horizontal scroll ───────────────────────────────────
+(function() {
+  const el = document.getElementById('weightDateRow');
+  if (!el) return;
+  let targetX = el.scrollLeft, rafId = null;
+  function smoothStep() {
+    const diff = targetX - el.scrollLeft;
+    if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
+    el.scrollLeft += diff * 0.06;
+    rafId = requestAnimationFrame(smoothStep);
+  }
+  el.addEventListener('wheel', e => {
+    if (e.deltaY === 0 || Math.abs(e.deltaX) > 0) return;
+    e.preventDefault(); e.stopPropagation();
     if (!rafId) targetX = el.scrollLeft;
     targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
     if (!rafId) rafId = requestAnimationFrame(smoothStep);
