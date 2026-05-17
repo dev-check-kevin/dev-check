@@ -2056,6 +2056,54 @@
     padding-top: 12px;
     border-top: 1px dashed var(--border);
   }
+  .share-divider {
+    border-top: 1px solid var(--border);
+    margin: 14px 0 10px;
+  }
+  .share-relations { display: flex; flex-direction: column; gap: 6px; }
+  .share-relation-row {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+    padding: 6px 2px;
+    font-size: 13px;
+    color: var(--text2);
+  }
+  .share-relation-row.inviter { color: #3fb950; }
+  .share-relation-row.none { color: var(--text3); }
+  .share-relation-tag {
+    font-size: 11px; color: var(--text3);
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .share-relation-text { flex: 1; }
+  .share-relation-text b { color: var(--text); }
+  .share-relation-id {
+    font-size: 12px; color: var(--text3);
+    font-family: var(--mono);
+    text-align: right;
+    word-break: break-all;
+  }
+  .share-relink {
+    color: #4285F4;
+    font-size: 12px;
+    text-decoration: none;
+    border: 1px solid color-mix(in srgb, #4285F4 40%, transparent);
+    padding: 3px 10px;
+    border-radius: 4px;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .share-relink:hover {
+    background: color-mix(in srgb, #4285F4 12%, transparent);
+    border-color: #4285F4;
+  }
+  .share-invitees-loading,
+  .share-invitees-empty {
+    text-align: center; font-size: 12px;
+    color: var(--text3); padding: 8px;
+  }
 
   /* ── Notes page ── */
   .notes-page { max-width: 800px; margin: 0 auto; padding: 24px 20px; }
@@ -2688,15 +2736,12 @@
   <div class="pl-card">
     <button class="pl-close" onclick="closeUpgradeModal()" aria-label="關閉">✕</button>
     <div class="pl-meta">一封給看到這裡的你 · LETTER №.03</div>
-    <h1 class="pl-greeting">嗨，謝謝你願意<br>看到付費這一頁。</h1>
+    <h1 class="pl-greeting">謝謝你願意<br>支持 ETF Cross</h1>
     <div class="pl-body">
-      這個 ETF 分析工具的開發花了不少心血，我希望統整所有資訊在五頁以內，
-      原本只是想縮短自己分析的時間，沒想到有人真的在用。
+      ETF Cross 花了不少時間整理與驗證公開資料，只希望能把原本分散的 ETF 資訊，變成更容易理解的市場結構分析，讓更多人，看見 ETF 背後的資金流向。
       <br><br>
-      當日資訊、基礎功能會一直免費，這裡不給建議也不報明牌，
-      訂閱只是讓我有底氣繼續開發新工具，不用煩惱伺服器明天要不要關掉。
-      價格我想了很久，希望它便宜到你不用考慮太久，
-      又能讓我繼續寫下去——
+      免費功能會持續開放，這裡不提供投資建議，也不販售明牌。
+      而會員訂閱解鎖進階工具，則會幫助 ETF Cross 持續維護資料、開發新功能，以及建立更完整的 ETF 結構研究系統。
     </div>
     <div class="pl-plans" id="plPlans">
       <!-- populated by showUpgradeModal() -->
@@ -3818,11 +3863,11 @@ function isPaidTier() {
 }
 
 // ── Trial helpers ───────────────────────────────────────────────────────
-// 試用期：登入即送 5 天，被邀請 +3，每邀 1 人 +3（最多 4 人），總上限 17 天
+// 試用期：登入即送 5 天，被邀請 +3，每邀 1 人 +3（最多 3 人），總上限 17 天 = 5 + 3 + 3*3
 const TRIAL_BASE_DAYS      = 5;
 const TRIAL_INVITED_BONUS  = 3;
 const TRIAL_REFERRAL_BONUS = 3;
-const TRIAL_REFERRAL_MAX   = 4;
+const TRIAL_REFERRAL_MAX   = 3;
 const TRIAL_MAX_DAYS       = 17;
 
 // Returns: { state, totalDays?, remainingDays?, wasInvited?, invitedCount? }
@@ -3914,12 +3959,16 @@ async function showShareModal() {
   const link   = origin + '?ref=' + uid;
   const s = getTrialState();
   const invitedCount  = s.invitedCount || 0;
-  const cappedInvites = Math.min(invitedCount, TRIAL_REFERRAL_MAX);
-  const gainedDays    = cappedInvites * TRIAL_REFERRAL_BONUS;
+  const wasInvited    = !!s.wasInvited;
+  const gotCodeCount  = wasInvited ? 1 : 0;
+  const totalDays     = s.totalDays || TRIAL_BASE_DAYS;
   const remCount      = Math.max(0, TRIAL_REFERRAL_MAX - invitedCount);
   const remainingTxt  = s.state === 'trial'
-    ? `試用期還剩 <b style="color:#3fb950">${s.remainingDays} 天</b>（共 ${s.totalDays} 天）`
+    ? `試用期還剩 <b style="color:#3fb950">${s.remainingDays} 天</b>（共 ${totalDays} 天）`
     : (s.state === 'expired' ? '<b style="color:var(--text2)">你的試用期已結束</b>，可重新累積邀請延長' : '');
+  const inviterRow = wasInvited
+    ? `<div class="share-relation-row inviter"><span class="share-relation-tag">邀請碼來源</span><span class="share-relation-text">已透過邀請碼登入 (+${TRIAL_INVITED_BONUS} 天)</span></div>`
+    : `<div class="share-relation-row none"><span class="share-relation-text">尚未獲取邀請碼</span><a href="javascript:void(0)" class="share-relink" onclick="signOutAndUseRef()">重新登入</a></div>`;
   document.getElementById('shareModalBody').innerHTML = `
     <div class="share-headline">
       <div class="share-icon">🎁</div>
@@ -3928,22 +3977,27 @@ async function showShareModal() {
       <div class="share-sub">試用期間享全功能。</div>
     </div>
     <div class="share-stats">
+      <div class="share-stat"><div class="share-stat-num">${gotCodeCount}</div><div class="share-stat-label">獲取邀請碼</div></div>
       <div class="share-stat"><div class="share-stat-num">${invitedCount}</div><div class="share-stat-label">已邀人數</div></div>
-      <div class="share-stat"><div class="share-stat-num">+${gainedDays}</div><div class="share-stat-label">已延長 (天)</div></div>
-      <div class="share-stat"><div class="share-stat-num">${TRIAL_MAX_DAYS}</div><div class="share-stat-label">試用上限 (天)</div></div>
+      <div class="share-stat"><div class="share-stat-num">${totalDays}</div><div class="share-stat-label">共延長 (基礎${TRIAL_BASE_DAYS}天)</div></div>
     </div>
     ${remainingTxt ? `<div class="share-remaining">${remainingTxt}</div>` : ''}
     <div class="share-link-row">
       <input id="shareLinkInput" class="share-link-input" readonly value="${link}">
       <button class="share-copy-btn" onclick="copyShareLink()">複製</button>
     </div>
-    <div id="shareInviteesList" class="share-invitees-wrap">
+    <div class="share-divider"></div>
+    <div class="share-relations">
+      ${inviterRow}
+    </div>
+    <div class="share-divider"></div>
+    <div id="shareInviteesList" class="share-relations">
       <div class="share-invitees-loading">載入中…</div>
     </div>
     <div class="share-rules">
       · 每邀 1 人 +${TRIAL_REFERRAL_BONUS} 天，最多計 ${TRIAL_REFERRAL_MAX} 人<br>
       · 被邀請者進場時也送 ${TRIAL_BASE_DAYS + TRIAL_INVITED_BONUS} 天（基礎 ${TRIAL_BASE_DAYS} + 被邀 ${TRIAL_INVITED_BONUS}）<br>
-      · 還可再邀 <b>${remCount}</b> 人（試用上限 ${TRIAL_MAX_DAYS} 天）
+      · 還可再邀 <b>${remCount}</b> 人
     </div>
   `;
   modal.style.display = '';
@@ -3955,15 +4009,23 @@ async function showShareModal() {
     const listEl = document.getElementById('shareInviteesList');
     if (listEl) {
       if (invitees.length === 0) {
-        listEl.innerHTML = '<div class="share-invitees-empty">還沒有人使用你的連結</div>';
+        listEl.innerHTML = '<div class="share-invitees-empty">尚未透過你的連結邀請任何人</div>';
       } else {
         listEl.innerHTML = invitees.map(i => `
-          <div class="share-invitee-row">
-            <span class="share-invitee-name">${i.name || i.email.split('@')[0]}</span>
-            <span class="share-invitee-email">${i.email}</span>
+          <div class="share-relation-row">
+            <span class="share-relation-text"><b>已成功邀請</b> ${i.name || i.email.split('@')[0]}</span>
+            <span class="share-relation-id">${i.email}</span>
           </div>`).join('');
       }
     }
+  }
+}
+
+// Trigger sign-out so user can re-login via a friend's ref link to bind
+function signOutAndUseRef() {
+  if (typeof window._signOut === 'function') {
+    window._signOut();
+    closeShareModal();
   }
 }
 
@@ -4865,6 +4927,12 @@ updateHistoryDesc();
   window._triggerLogin = () => openCombinedModal(null, {
     startTab: ANN_VERSION ? 'tos-ann' : 'tos-terms', force: true
   });
+
+  // Expose sign-out so share modal "重新登入" can call it
+  window._signOut = async () => {
+    try { await window.fcmUnsubscribe?.(); } catch (e) {}
+    try { await signOut(auth); } catch (e) { console.warn('signOut failed', e); }
+  };
 
   // ── Notes ────────────────────────────────────────────────────────────────
   function fmtTime(ts) {
