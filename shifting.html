@@ -1034,28 +1034,30 @@
     text-align: center;
   }
   @keyframes wall-group-in {
-    from { opacity: 0; transform: scaleY(-1) translateY(-14px); }
-    to   { opacity: 1; transform: scaleY(-1) translateY(0); }
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes wall-add-in {
-    from { opacity: 0; transform: scaleY(-1) translateY(-14px); }
-    to   { opacity: 1; transform: scaleY(-1) translateY(0); }
+    from { opacity: 0; transform: translateY(-14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .history-wall-h {
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding-top: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-    transform: scaleY(-1);
+    padding-bottom: 6px;
+    scrollbar-width: none;
     cursor: grab;
   }
   .history-wall-h.is-dragging { cursor: grabbing; user-select: none; }
-  .history-wall-h > * { transform: scaleY(-1); }
-  .history-wall-h::-webkit-scrollbar { height: 4px; }
-  .history-wall-h::-webkit-scrollbar-track { background: transparent; }
-  .history-wall-h::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .history-wall-h::-webkit-scrollbar { display: none; }
+  .hw-scrollbar-track {
+    height: 4px; position: relative; margin-bottom: 8px; border-radius: 2px;
+  }
+  .hw-scrollbar-thumb {
+    position: absolute; top: 0; height: 4px;
+    background: var(--border); border-radius: 2px; min-width: 32px;
+  }
   .shifting-page-wrap {
     max-width: 1400px;
     margin: 0 auto;
@@ -2687,6 +2689,7 @@
 <div class="history-page-wrap">
   <div class="history-wall-section">
     <div class="section-title">動態牆</div>
+    <div class="hw-scrollbar-track"><div id="historyWallThumb" class="hw-scrollbar-thumb"></div></div>
     <div id="historyWall" class="history-wall-h"></div>
   </div>
 </div>
@@ -3329,6 +3332,7 @@ function renderHistoryWall(mode = '') {
   const lockedHtml = _renderTimelineLockCard(hiddenCount);
 
   container.innerHTML = lockedHtml + groupsHtml;
+  if (typeof window._syncHistoryWallThumb === 'function') window._syncHistoryWallThumb();
 
   requestAnimationFrame(() => {
     const addSections = container.querySelectorAll('.wall-add-section');
@@ -4164,17 +4168,34 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── Timeline drag-to-scroll (mouse) ──────────────────────────────────────
+// ── Timeline drag-to-scroll + custom top scrollbar ────────────────────────
 (function() {
-  const el = document.getElementById('historyWall');
+  const el    = document.getElementById('historyWall');
+  const thumb = document.getElementById('historyWallThumb');
   if (!el) return;
+
+  // Sync custom scrollbar thumb
+  function syncThumb() {
+    if (!thumb) return;
+    const visible  = el.clientWidth;
+    const total    = el.scrollWidth;
+    if (total <= visible) { thumb.style.display = 'none'; return; }
+    thumb.style.display = '';
+    const ratio    = visible / total;
+    const thumbPct = ratio * 100;
+    const leftPct  = (el.scrollLeft / (total - visible)) * (1 - ratio) * 100;
+    thumb.style.width = thumbPct + '%';
+    thumb.style.left  = leftPct  + '%';
+  }
+  el.addEventListener('scroll', syncThumb, { passive: true });
+  // Expose for call after wall content renders
+  window._syncHistoryWallThumb = syncThumb;
+
+  // Drag to scroll
   let dragging = false, startX = 0, startScroll = 0;
   el.addEventListener('mousedown', e => {
-    dragging = true;
-    startX = e.clientX;
-    startScroll = el.scrollLeft;
-    el.classList.add('is-dragging');
-    e.preventDefault();
+    dragging = true; startX = e.clientX; startScroll = el.scrollLeft;
+    el.classList.add('is-dragging'); e.preventDefault();
   });
   window.addEventListener('mouseup', () => {
     if (dragging) { dragging = false; el.classList.remove('is-dragging'); }
