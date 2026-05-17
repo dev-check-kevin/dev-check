@@ -3958,17 +3958,18 @@ async function showShareModal() {
   const origin = location.origin + location.pathname.replace(/[^/]*$/, '');
   const link   = origin + '?ref=' + uid;
   const s = getTrialState();
-  const invitedCount  = s.invitedCount || 0;
-  const wasInvited    = !!s.wasInvited;
-  const gotCodeCount  = wasInvited ? 1 : 0;
-  const totalDays     = s.totalDays || TRIAL_BASE_DAYS;
-  const remCount      = Math.max(0, TRIAL_REFERRAL_MAX - invitedCount);
+  const invitedCount    = s.invitedCount || 0;
+  const wasInvited      = !!s.wasInvited;
+  const gotCodeCount    = wasInvited ? 1 : 0;
+  const totalDays       = s.totalDays || TRIAL_BASE_DAYS;
+  const extensionDays   = (wasInvited ? TRIAL_INVITED_BONUS : 0) + Math.min(invitedCount, TRIAL_REFERRAL_MAX) * TRIAL_REFERRAL_BONUS;
+  const remCount        = Math.max(0, TRIAL_REFERRAL_MAX - invitedCount);
   const remainingTxt  = s.state === 'trial'
     ? `試用期還剩 <b style="color:#3fb950">${s.remainingDays} 天</b>（共 ${totalDays} 天）`
     : (s.state === 'expired' ? '<b style="color:var(--text2)">你的試用期已結束</b>，可重新累積邀請延長' : '');
   const inviterRow = wasInvited
-    ? `<div class="share-relation-row inviter"><span class="share-relation-tag">邀請碼來源</span><span class="share-relation-text">已透過邀請碼登入 (+${TRIAL_INVITED_BONUS} 天)</span></div>`
-    : `<div class="share-relation-row none"><span class="share-relation-text">尚未獲取邀請碼</span><a href="javascript:void(0)" class="share-relink" onclick="signOutAndUseRef()">重新登入</a></div>`;
+    ? `<div class="share-relation-row inviter"><span class="share-relation-text">邀請碼來源：已透過邀請碼登入 (+${TRIAL_INVITED_BONUS} 天)</span></div>`
+    : `<div class="share-relation-row none"><span class="share-relation-text">尚未獲取邀請碼</span></div>`;
   document.getElementById('shareModalBody').innerHTML = `
     <div class="share-headline">
       <div class="share-icon">🎁</div>
@@ -3979,7 +3980,7 @@ async function showShareModal() {
     <div class="share-stats">
       <div class="share-stat"><div class="share-stat-num">${gotCodeCount}</div><div class="share-stat-label">獲取邀請碼</div></div>
       <div class="share-stat"><div class="share-stat-num">${invitedCount}</div><div class="share-stat-label">已邀人數</div></div>
-      <div class="share-stat"><div class="share-stat-num">${totalDays}</div><div class="share-stat-label">共延長 (基礎${TRIAL_BASE_DAYS}天)</div></div>
+      <div class="share-stat"><div class="share-stat-num">${extensionDays}</div><div class="share-stat-label">共延長 (天)</div></div>
     </div>
     ${remainingTxt ? `<div class="share-remaining">${remainingTxt}</div>` : ''}
     <div class="share-link-row">
