@@ -2767,7 +2767,7 @@
 
 <!-- ── Shared header ──────────────────────────────────────────────────── -->
 <div class="header" id="mainHeader" style="display:none">
-  <h1>台灣 <span> ETF </span> 成分股交叉分析</h1>
+  <h1>Taiwan <span>ETF</span> 成分股交叉分析 ｜ ETF Cross</h1>
   <p class="header-sub">你的卡片 + 主動式 + 被動式 &nbsp;|&nbsp; 點擊卡片開始分析 &nbsp;|&nbsp; 資料日期：<b>2026/05/15</b> &nbsp;</p>
 </div>
 
@@ -4721,7 +4721,7 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
 // INTRO: ParticleNetwork Canvas + Sequence Controller
 // (Inlined from etfdev/docs_dev/etfdev-brain-intro.js)
 // ────────────────────────────────────────────────────────────────────────────
-const INTRO_DATA_POINTS = '2,698';
+const INTRO_DATA_POINTS = '48,944';
 
 // etfdev-brain-intro.js
 // Particle Network canvas animation + Intro sequence controller
@@ -4988,7 +4988,7 @@ async function runIntro() {
   const zh = Math.random() < 0.5;
   document.getElementById('intro-status-text').textContent = zh
     ? '安全連線已建立，正在初始化數據引擎...'
-    : 'Secure connection established. Initializing data engine...';
+    : 'Secure connection established...';
   const dp = (typeof INTRO_DATA_POINTS !== 'undefined' ? INTRO_DATA_POINTS : '—');
   const setText = id => document.getElementById('intro-status-text').textContent = id;
 
