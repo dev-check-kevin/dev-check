@@ -2312,7 +2312,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     width: min(560px, calc(100vw - 32px));
-    max-height: 88vh;
+    height: min(600px, 88vh);
     display: flex; flex-direction: column;
     box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(88,166,255,0.12);
     transform: translateY(14px) scale(0.97);
@@ -4058,6 +4058,51 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ── Timeline horizontal scroll: wheel + drag ──────────────────────────────
+(function() {
+  const el = document.getElementById('historyWall');
+  if (!el) return;
+
+  // 觸控裝置保持原生滑動，不掛 wheel listener
+  if (!('ontouchstart' in window)) {
+    let targetX = el.scrollLeft, rafId = null;
+    function smoothStep() {
+      const diff = targetX - el.scrollLeft;
+      if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
+      el.scrollLeft += diff * 0.06;
+      rafId = requestAnimationFrame(smoothStep);
+    }
+    el.addEventListener('wheel', e => {
+      if (e.deltaY === 0 || Math.abs(e.deltaX) > 0) return;
+      e.preventDefault();
+      if (!rafId) targetX = el.scrollLeft;
+      targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
+      if (!rafId) rafId = requestAnimationFrame(smoothStep);
+    }, { passive: false });
+  }
+
+})();
+
+// ── Shifting date row horizontal scroll ───────────────────────────────────
+(function() {
+  const el = document.getElementById('weightDateRow');
+  if (!el || ('ontouchstart' in window)) return;
+  let targetX = el.scrollLeft, rafId = null;
+  function smoothStep() {
+    const diff = targetX - el.scrollLeft;
+    if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
+    el.scrollLeft += diff * 0.06;
+    rafId = requestAnimationFrame(smoothStep);
+  }
+  el.addEventListener('wheel', e => {
+    if (e.deltaY === 0 || Math.abs(e.deltaX) > 0) return;
+    e.preventDefault();
+    if (!rafId) targetX = el.scrollLeft;
+    targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
+    if (!rafId) rafId = requestAnimationFrame(smoothStep);
+  }, { passive: false });
+})();
+
 // Close TOS modal when clicking the backdrop
 document.addEventListener('click', e => {
   const modal = document.getElementById('tosModal');
@@ -4065,6 +4110,7 @@ document.addEventListener('click', e => {
   const card = modal.querySelector('.tos-card');
   if (card && !card.contains(e.target)) modal.classList.remove('show');
 });
+
 
 // Called by Firebase module when auth state changes; re-renders cards + modal
 window.onAuthChanged = () => {
