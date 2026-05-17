@@ -2678,33 +2678,17 @@
   <div class="intro-status">
     <div class="status-row">
       <span class="status-dot"></span>
-      <span id="intro-status-text">scanning · 12,480 data points</span>
+      <span id="intro-status-text">安全連線已建立，正在初始化數據引擎...</span>
     </div>
     <div class="status-progress">
       <div class="status-bar" id="intro-status-bar"></div>
     </div>
   </div>
   <div id="intro-insights">
-    <div class="insight">
-      <div class="insight-tag">SIGNAL · 05/15</div>
-      <div class="insight-row"><span class="insight-k">2327</span><span class="insight-v">國巨*</span></div>
-      <div class="insight-note">新進場</div>
-    </div>
-    <div class="insight">
-      <div class="insight-tag">WALL · 05/15</div>
-      <div class="insight-row"><span class="insight-k">+1</span><span class="insight-v">-1</span></div>
-      <div class="insight-note">新增 / 移出</div>
-    </div>
-    <div class="insight">
-      <div class="insight-tag">CONSENSUS · 05/15</div>
-      <div class="insight-row"><span class="insight-k">2303</span><span class="insight-v">聯電</span></div>
-      <div class="insight-note">2 ETF 同步加碼</div>
-    </div>
-    <div class="insight">
-      <div class="insight-tag">SHIFT · 05/15</div>
-      <div class="insight-row"><span class="insight-k">2303</span><span class="insight-v">9,966 張</span></div>
-      <div class="insight-note">加碼量最大</div>
-    </div>
+    <div class="insight"><div class="insight-tag"></div><div class="insight-row"><span class="insight-k"></span><span class="insight-v"></span></div><div class="insight-note"></div></div>
+    <div class="insight"><div class="insight-tag"></div><div class="insight-row"><span class="insight-k"></span><span class="insight-v"></span></div><div class="insight-note"></div></div>
+    <div class="insight"><div class="insight-tag"></div><div class="insight-row"><span class="insight-k"></span><span class="insight-v"></span></div><div class="insight-note"></div></div>
+    <div class="insight"><div class="insight-tag"></div><div class="insight-row"><span class="insight-k"></span><span class="insight-v"></span></div><div class="insight-note"></div></div>
   </div>
   <button id="intro-skip">skip →</button>
 </div>
@@ -4737,6 +4721,7 @@ if (HISTORY_DATA.length > 0) {
 // INTRO: ParticleNetwork Canvas + Sequence Controller
 // (Inlined from etfdev/docs_dev/etfdev-brain-intro.js)
 // ────────────────────────────────────────────────────────────────────────────
+const INTRO_DATA_POINTS = '2,698';
 
 // etfdev-brain-intro.js
 // Particle Network canvas animation + Intro sequence controller
@@ -5000,25 +4985,40 @@ async function runIntro() {
 
   introNet = new ParticleNetworkCanvas(canvas, { density: 260, speed: 1.1, palette, phase: 'swarm' });
 
-  await wait(1600);
-  introNet.setPhase('connect');
-  document.getElementById('intro-status-text').textContent = 'building correlation graph';
-  document.getElementById('intro-status-bar').style.width = '60%';
+  const zh = Math.random() < 0.5;
+  document.getElementById('intro-status-text').textContent = zh
+    ? '安全連線已建立，正在初始化數據引擎...'
+    : 'Secure connection established. Initializing data engine...';
+  const dp = (typeof INTRO_DATA_POINTS !== 'undefined' ? INTRO_DATA_POINTS : '—');
+  const setText = id => document.getElementById('intro-status-text').textContent = id;
 
-  await wait(2000);
+  await wait(700);
+  introNet.setPhase('connect');
+  setText(zh
+    ? `載入成分股持股矩陣 · ${dp} 資料節點...`
+    : `Loading component matrix · ${dp} data nodes...`);
+  document.getElementById('intro-status-bar').style.width = '20%';
+
+  await wait(900);
   introNet.setPhase('focus');
-  document.getElementById('intro-status-text').textContent = 'extracting signal';
-  document.getElementById('intro-status-bar').style.width = '96%';
+  setText(zh
+    ? '計算跨投信交叉持股權重與重疊度...'
+    : 'Computing cross-fund intersection weights...');
+  document.getElementById('intro-status-bar').style.width = '70%';
 
   const insights = document.querySelectorAll('#intro-insights .insight');
   const hubs = introNet.getHubs();
   for (let i = 0; i < insights.length; i++) {
     introNet.setHighlights([hubs[i] ?? i * 10]);
     insights[i].classList.add('in');
-    await wait(650);
+    await wait(300);
   }
 
-  await wait(900);
+  setText(zh
+    ? '提取產業輪動與歷史異動訊號...'
+    : 'Extracting sector rotation & shift signals...');
+  document.getElementById('intro-status-bar').style.width = '100%';
+  await wait(400);
   finishIntro();
 }
 
@@ -5035,6 +5035,26 @@ function wait(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
 
+
+// ── Intro cards: 隨機填入主動式 ETF 資料 ──
+(function() {
+  const etfs = [{"ticker": "00981A", "name": "主動統一台股增長", "aum": "2,572 億", "price": 28.33, "holdings": 51, "added": 0, "removed": 1, "changed": 37, "date": "05/15"}, {"ticker": "00403A", "name": "主動統一升級50", "aum": "1,564 億", "price": 9.93, "holdings": 50, "added": 0, "removed": 0, "changed": 0, "date": "05/15"}, {"ticker": "00982A", "name": "主動群益台灣強棒", "aum": "501 億", "price": 22.48, "holdings": 57, "added": 1, "removed": 0, "changed": 52, "date": "05/15"}, {"ticker": "00992A", "name": "主動群益科技創新", "aum": "501 億", "price": 17.39, "holdings": 46, "added": 0, "removed": 0, "changed": 46, "date": "05/15"}, {"ticker": "00991A", "name": "主動復華未來50", "aum": "459 億", "price": 17.59, "holdings": 50, "added": 0, "removed": 0, "changed": 26, "date": "05/15"}, {"ticker": "00988A", "name": "主動統一全球創新", "aum": "364 億", "price": 19.72, "holdings": 13, "added": 0, "removed": 0, "changed": 13, "date": "05/15"}, {"ticker": "00990A", "name": "主動元大AI新經濟", "aum": "331 億", "price": 18.21, "holdings": 12, "added": 0, "removed": 0, "changed": 12, "date": "05/15"}, {"ticker": "00400A", "name": "主動國泰動能高息", "aum": "204 億", "price": 13.23, "holdings": 51, "added": 0, "removed": 0, "changed": 46, "date": "05/15"}];
+  if (!etfs.length) return;
+
+  // Fisher-Yates shuffle
+  for (let i = etfs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [etfs[i], etfs[j]] = [etfs[j], etfs[i]];
+  }
+
+  document.querySelectorAll('#intro-insights .insight').forEach((card, i) => {
+    const e = etfs[i % etfs.length];
+    card.querySelector('.insight-tag').textContent  = '規模 ' + (e.date || '--');
+    card.querySelector('.insight-k').textContent    = e.ticker;
+    card.querySelector('.insight-v').textContent    = e.aum;
+    card.querySelector('.insight-note').textContent = e.name;
+  });
+})();
 
 // Skip button
 document.getElementById('intro-skip')?.addEventListener('click', finishIntro);
