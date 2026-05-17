@@ -2541,9 +2541,173 @@
   .tos-ann-body b { color: var(--accent); }
   .tos-ann-body p { margin-bottom: 4px; }
   .tos-ann-body .ann-sub { color: var(--text3); font-size: 12px; margin-top: 8px; }
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     INTRO OVERLAY STYLES
+  ────────────────────────────────────────────────────────────────────────────── */
+  #intro-overlay {
+    position: fixed; inset: 0; z-index: 5000;
+    background: #0a0d12;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.7s ease, filter 0.7s ease;
+  }
+  #intro-overlay.exit { opacity: 0; filter: blur(8px); pointer-events: none; }
+  #intro-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+  .intro-vignette {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at center, transparent 40%, rgba(10,13,18,0.85) 100%),
+      radial-gradient(ellipse at center, transparent 60%, #0a0d12 100%);
+    pointer-events: none; z-index: 1;
+  }
+
+  .intro-mark {
+    position: absolute; top: 32px; left: 36px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
+    color: #98a3b3;
+    z-index: 2;
+  }
+  .intro-mark-dot {
+    width: 8px; height: 8px; border-radius: 999px;
+    background: #5fb3ff;
+    box-shadow: 0 0 12px #5fb3ff;
+    animation: pulse-intro 1.4s ease-in-out infinite;
+  }
+
+  .intro-status {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 380px; max-width: 70vw;
+    z-index: 2;
+    display: flex; flex-direction: column; gap: 14px; align-items: center;
+    pointer-events: none;
+  }
+  .status-row {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 11px;
+    color: #98a3b3; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 999px;
+    background: #ff8a4c;
+    box-shadow: 0 0 10px #ff8a4c;
+    animation: pulse-intro 1s infinite;
+  }
+  .status-progress {
+    width: 100%; height: 1px; background: rgba(255,255,255,0.08);
+    position: relative; overflow: hidden;
+  }
+  .status-bar {
+    height: 100%; background: linear-gradient(90deg, #5fb3ff, #ff8a4c);
+    width: 0;
+    transition: width 0.8s ease;
+  }
+
+  #intro-insights {
+    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    width: min(960px, 92vw);
+    z-index: 2;
+  }
+  .insight {
+    background: rgba(15, 20, 28, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 14px 16px;
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .insight.in { opacity: 1; transform: translateY(0); }
+  .insight-tag {
+    font-family: var(--mono); font-size: 10px;
+    color: #ff8a4c; letter-spacing: 0.08em;
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  .insight-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; margin-bottom: 4px;
+  }
+  .insight-k {
+    font-family: var(--mono); font-size: 16px;
+    font-weight: 600; color: #e6edf3;
+  }
+  .insight-v {
+    font-family: var(--mono); font-size: 16px; color: #5fb3ff;
+  }
+  .insight-note {
+    font-size: 11px; color: #5d6877;
+    font-family: var(--mono);
+  }
+
+  #intro-skip {
+    position: absolute; bottom: 32px; right: 36px;
+    background: transparent; border: 1px solid rgba(255,255,255,0.08);
+    color: #98a3b3;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    padding: 8px 14px; cursor: pointer;
+    z-index: 3;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  #intro-skip:hover {
+    border-color: #98a3b3; color: #e6edf3;
+  }
+
+  @keyframes pulse-intro {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  @media (max-width: 1100px) {
+    #intro-insights { grid-template-columns: repeat(2, 1fr); }
+  }
+
 </style>
 </head>
 <body>
+
+<!-- ── Intro Overlay with ParticleNetwork ─────────────────────────────────── -->
+<div id="intro-overlay">
+  <canvas id="intro-canvas"></canvas>
+  <div class="intro-vignette"></div>
+  <div class="intro-mark">
+    <div class="intro-mark-dot"></div>
+    <span>etfcross / brain</span>
+  </div>
+  <div class="intro-status">
+    <div class="status-row">
+      <span class="status-dot"></span>
+      <span id="intro-status-text">scanning · 12,480 data points</span>
+    </div>
+    <div class="status-progress">
+      <div class="status-bar" id="intro-status-bar"></div>
+    </div>
+  </div>
+  <div id="intro-insights">
+    <div class="insight">
+      <div class="insight-tag">SIGNAL · 05/15</div>
+      <div class="insight-row"><span class="insight-k">2327</span><span class="insight-v">國巨*</span></div>
+      <div class="insight-note">新進場</div>
+    </div>
+    <div class="insight">
+      <div class="insight-tag">WALL · 05/15</div>
+      <div class="insight-row"><span class="insight-k">+1</span><span class="insight-v">-1</span></div>
+      <div class="insight-note">新增 / 移出</div>
+    </div>
+    <div class="insight">
+      <div class="insight-tag">CONSENSUS · 05/15</div>
+      <div class="insight-row"><span class="insight-k">2303</span><span class="insight-v">聯電</span></div>
+      <div class="insight-note">2 ETF 同步加碼</div>
+    </div>
+    <div class="insight">
+      <div class="insight-tag">SHIFT · 05/15</div>
+      <div class="insight-row"><span class="insight-k">2303</span><span class="insight-v">9,966 張</span></div>
+      <div class="insight-note">加碼量最大</div>
+    </div>
+  </div>
+  <button id="intro-skip">skip →</button>
+</div>
 
 <!-- ── Combined modal (entry gate: announcement + TOS) ──────────────── -->
 <div class="tos-modal" id="tosModal" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
@@ -4571,6 +4735,320 @@ renderWeightDateRow(true);
 renderHistoryETFTabs();
 renderHistoryContent();
 updateHistoryDesc();
+
+// ────────────────────────────────────────────────────────────────────────────
+// INTRO: ParticleNetwork Canvas + Sequence Controller
+// (Inlined from etfdev/docs_dev/etfdev-brain-intro.js)
+// ────────────────────────────────────────────────────────────────────────────
+
+// etfdev-brain-intro.js
+// Particle Network canvas animation + Intro sequence controller
+// Converted from JSX (network.jsx, intro.jsx) to vanilla JS
+// Hand-maintained static file for production builds
+
+class ParticleNetworkCanvas {
+  constructor(canvas, options = {}) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.density = options.density || 260;
+    this.speed = options.speed || 1.1;
+    this.palette = options.palette || {};
+    this.phase = options.phase || 'swarm';
+    this.intensity = options.intensity || 1;
+    this.highlightIds = [];
+    this.nodes = [];
+    this.hubs = [];
+    this.t = 0;
+    this.stopped = false;
+    this.rafId = 0;
+
+    // Fix: Set canvas element style to fill parent
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+
+    this.resize();
+    this.initNodes();
+
+    // Fix: Bind step method for arrow function compatibility
+    this.step = this.step.bind(this);
+    this.start();
+
+    this.ro = new ResizeObserver(() => this.resize());
+    this.ro.observe(canvas);
+  }
+
+  resize() {
+    const w = Math.max(1, this.canvas.clientWidth);
+    const h = Math.max(1, this.canvas.clientHeight);
+    this.canvas.width = Math.floor(w * this.dpr);
+    this.canvas.height = Math.floor(h * this.dpr);
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+  }
+
+  initNodes() {
+    const w = Math.max(200, this.canvas.clientWidth);
+    const h = Math.max(200, this.canvas.clientHeight);
+    const cx = w / 2;
+    const cy = h / 2;
+    const nodes = [];
+
+    for (let i = 0; i < this.density; i++) {
+      const r = Math.pow(Math.random(), 0.7) * Math.min(w, h) * 0.55;
+      const a = Math.random() * Math.PI * 2;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      nodes.push({
+        x, y, ox: x, oy: y,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() < 0.08 ? 2.4 + Math.random() * 1.6 : 0.7 + Math.random() * 1.1,
+        hub: Math.random() < 0.08,
+        alpha: 0,
+      });
+    }
+
+    this.nodes = nodes;
+    this.hubs = nodes.map((n, i) => ({ n, i })).filter(x => x.n.hub).slice(0, 8).map(x => x.i);
+  }
+
+  setPhase(phase) { this.phase = phase; }
+  setHighlights(ids) { this.highlightIds = ids; }
+  getHubs() { return this.hubs; }
+
+  start() {
+    if (this.rafId) return;
+    this.step();
+  }
+
+  step() {
+    if (this.stopped) return;
+
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
+
+    // Clear: Fix globalAlpha to 0.35 for trails effect in intro mode
+    this.ctx.fillStyle = this.palette.bg || '#0a0d12';
+    this.ctx.globalAlpha = 0.35;
+    this.ctx.fillRect(0, 0, w, h);
+
+    const cx = w / 2, cy = h / 2;
+    this.t += 0.016 * this.speed;
+
+    // Physics
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      n.alpha = Math.min(1, n.alpha + 0.02);
+      n.vx += (Math.random() - 0.5) * 0.04;
+      n.vy += (Math.random() - 0.5) * 0.04;
+
+      let pullStrength = 0.004;
+      if (this.phase === 'focus') pullStrength = 0.012;
+      if (this.phase === 'calm') pullStrength = 0.006;
+      n.vx += (n.ox - n.x) * pullStrength;
+      n.vy += (n.oy - n.y) * pullStrength;
+
+      if (this.phase === 'connect') {
+        const dx = cx - n.x;
+        const dy = cy - n.y;
+        const d = Math.hypot(dx, dy) + 0.001;
+        const f = Math.sin(this.t * 1.4) * 0.02;
+        n.vx += (dx / d) * f;
+        n.vy += (dy / d) * f;
+      }
+
+      n.vx *= 0.92;
+      n.vy *= 0.92;
+      n.x += n.vx * this.speed;
+      n.y += n.vy * this.speed;
+    }
+
+    // Draw links
+    const linkR =
+      this.phase === 'swarm' ? 60 :
+      this.phase === 'connect' ? 95 :
+      this.phase === 'focus' ? 70 : 80;
+    const linkR2 = linkR * linkR;
+
+    this.ctx.lineWidth = 0.7;
+    this.ctx.strokeStyle = this.palette.line || 'rgba(95,179,255,0.22)';
+
+    const cell = linkR;
+    const cols = Math.max(1, Math.ceil(w / cell) + 1);
+    const rows = Math.max(1, Math.ceil(h / cell) + 1);
+    const grid = new Array(cols * rows);
+
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      const cxg = Math.max(0, Math.min(cols - 1, Math.floor(n.x / cell)));
+      const cyg = Math.max(0, Math.min(rows - 1, Math.floor(n.y / cell)));
+      const k = cyg * cols + cxg;
+      if (!grid[k]) grid[k] = [];
+      grid[k].push(i);
+    }
+
+    this.ctx.beginPath();
+    for (let cy2 = 0; cy2 < rows; cy2++) {
+      for (let cx2 = 0; cx2 < cols; cx2++) {
+        const bucket = grid[cy2 * cols + cx2];
+        if (!bucket) continue;
+        for (let oy = 0; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            if (oy === 0 && ox < 0) continue;
+            const nb = grid[(cy2 + oy) * cols + (cx2 + ox)];
+            if (!nb) continue;
+            for (let i = 0; i < bucket.length; i++) {
+              for (let j = 0; j < nb.length; j++) {
+                const a = bucket[i], b = nb[j];
+                if (a >= b) continue;
+                const na = this.nodes[a], nb2 = this.nodes[b];
+                const dx = na.x - nb2.x;
+                const dy = na.y - nb2.y;
+                const d2 = dx * dx + dy * dy;
+                if (d2 < linkR2) {
+                  const t = 1 - d2 / linkR2;
+                  this.ctx.globalAlpha = t * 0.55 * this.intensity * Math.min(na.alpha, nb2.alpha);
+                  this.ctx.moveTo(na.x, na.y);
+                  this.ctx.lineTo(nb2.x, nb2.y);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    this.ctx.stroke();
+    this.ctx.globalAlpha = 1;
+
+    // Highlight links
+    if (this.highlightIds.length) {
+      this.ctx.strokeStyle = this.palette.lineHi || 'rgba(255,138,76,0.6)';
+      this.ctx.lineWidth = 1.1;
+      this.ctx.beginPath();
+      for (const hi of this.highlightIds) {
+        const hub = this.nodes[hi];
+        if (!hub) continue;
+        for (let j = 0; j < this.nodes.length; j++) {
+          if (j === hi) continue;
+          const o = this.nodes[j];
+          const dx = hub.x - o.x;
+          const dy = hub.y - o.y;
+          const d2 = dx * dx + dy * dy;
+          const lr = linkR * 1.4;
+          if (d2 < lr * lr) {
+            const t = 1 - d2 / (lr * lr);
+            this.ctx.globalAlpha = t * 0.7 * this.intensity;
+            this.ctx.moveTo(hub.x, hub.y);
+            this.ctx.lineTo(o.x, o.y);
+          }
+        }
+      }
+      this.ctx.stroke();
+      this.ctx.globalAlpha = 1;
+    }
+
+    // Draw nodes
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      const isHi = this.highlightIds.includes(i);
+      const isHub = n.hub;
+      const baseR = (isHi ? n.r * 2.2 : isHub ? n.r * 1.4 : n.r);
+      const r = baseR * (1 + Math.sin(this.t * 2 + i) * 0.05);
+      const color = isHi ? (this.palette.nodeHi || '#ff8a4c') : (this.palette.node || '#5fb3ff');
+
+      if (isHi || isHub) {
+        try {
+          const glow = this.ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, Math.max(1, r * 6));
+          glow.addColorStop(0, color);
+          glow.addColorStop(1, 'rgba(0,0,0,0)');
+          this.ctx.fillStyle = glow;
+          this.ctx.globalAlpha = (isHi ? 0.55 : 0.18) * this.intensity;
+          this.ctx.beginPath();
+          this.ctx.arc(n.x, n.y, r * 6, 0, Math.PI * 2);
+          this.ctx.fill();
+        } catch (e) {}
+      }
+
+      this.ctx.globalAlpha = n.alpha * this.intensity * (isHi ? 1 : isHub ? 0.95 : 0.7);
+      this.ctx.fillStyle = color;
+      this.ctx.beginPath();
+      this.ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+
+    this.ctx.globalAlpha = 1;
+    this.rafId = requestAnimationFrame(() => this.step());
+  }
+
+  destroy() {
+    this.stopped = true;
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+    if (this.ro) this.ro.disconnect();
+  }
+}
+
+let introNet = null;
+
+async function runIntro() {
+  const canvas = document.getElementById('intro-canvas');
+  if (!canvas) return;
+
+  const palette = {
+    bg: '#0a0d12',
+    node: '#5fb3ff',
+    nodeHi: 'oklch(0.72 0.17 360)',
+    line: 'rgba(95,179,255,0.22)',
+    lineHi: 'oklch(0.72 0.17 360 / 0.55)',
+  };
+
+  introNet = new ParticleNetworkCanvas(canvas, { density: 260, speed: 1.1, palette, phase: 'swarm' });
+
+  await wait(1600);
+  introNet.setPhase('connect');
+  document.getElementById('intro-status-text').textContent = 'building correlation graph';
+  document.getElementById('intro-status-bar').style.width = '60%';
+
+  await wait(2000);
+  introNet.setPhase('focus');
+  document.getElementById('intro-status-text').textContent = 'extracting signal';
+  document.getElementById('intro-status-bar').style.width = '96%';
+
+  const insights = document.querySelectorAll('#intro-insights .insight');
+  const hubs = introNet.getHubs();
+  for (let i = 0; i < insights.length; i++) {
+    introNet.setHighlights([hubs[i] ?? i * 10]);
+    insights[i].classList.add('in');
+    await wait(650);
+  }
+
+  await wait(900);
+  finishIntro();
+}
+
+function finishIntro() {
+  const overlay = document.getElementById('intro-overlay');
+  overlay.classList.add('exit');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    if (introNet) introNet.destroy();
+  }, 700);
+}
+
+function wait(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+
+// Skip button
+document.getElementById('intro-skip')?.addEventListener('click', finishIntro);
+
+// Start intro if not seen in this session
+if (!sessionStorage.getItem('introSeen')) {
+  sessionStorage.setItem('introSeen', '1');
+  runIntro().catch(() => finishIntro());
+} else {
+  document.getElementById('intro-overlay').style.display = 'none';
+}
 </script>
 
 <!-- ── Firebase Auth + Firestore ── -->
