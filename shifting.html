@@ -5004,7 +5004,7 @@ async function runIntro() {
   const dp = (typeof INTRO_DATA_POINTS !== 'undefined' ? INTRO_DATA_POINTS : '—');
   const setText = id => document.getElementById('intro-status-text').textContent = id;
 
-  await wait(700);
+  await wait(300);
   introNet.setPhase('connect');
   setText(zh
     ? `載入成分股持股矩陣 · ${dp} 資料節點...`
@@ -5023,14 +5023,14 @@ async function runIntro() {
   for (let i = 0; i < insights.length; i++) {
     introNet.setHighlights([hubs[i] ?? i * 10]);
     insights[i].classList.add('in');
-    await wait(300);
+    await wait(200);
   }
 
   setText(zh
-    ? '提取產業輪動與歷史異動訊號...'
-    : 'Extracting sector rotation & shift signals...');
+    ? '看見 ETF 背後的市場共識'
+    : 'Uncovering the consensus behind every ETF');
   document.getElementById('intro-status-bar').style.width = '100%';
-  await wait(400);
+  await wait(1200);
   finishIntro();
 }
 
