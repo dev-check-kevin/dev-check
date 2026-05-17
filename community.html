@@ -1014,6 +1014,8 @@
     padding: 16px 16px 10px;
   }
   .history-wall-section .section-title {
+    font-size: 18px;
+    letter-spacing: 2px;
     margin-bottom: 16px;
   }
   .wall-inner-sep {
@@ -1043,10 +1045,14 @@
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding-top: 6px;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+    transform: scaleY(-1);
+    cursor: grab;
   }
+  .history-wall-h.is-dragging { cursor: grabbing; user-select: none; }
+  .history-wall-h > * { transform: scaleY(-1); }
   .history-wall-h::-webkit-scrollbar { height: 4px; }
   .history-wall-h::-webkit-scrollbar-track { background: transparent; }
   .history-wall-h::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -2027,6 +2033,23 @@
   }
   .share-copy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
   .share-copy-btn.copied { background: linear-gradient(135deg, #56d364, #3fb950); }
+  .share-invitees-wrap {
+    margin: 12px 0 0;
+    padding: 10px 0 2px;
+    border-top: 1px solid var(--border);
+  }
+  .share-invitees-loading, .share-invitees-empty {
+    font-size: 12px; color: var(--text3); padding: 4px 0;
+  }
+  .share-invitee-row {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    font-size: 13px;
+  }
+  .share-invitee-row:last-child { border-bottom: none; }
+  .share-invitee-name { color: var(--text1); font-weight: 500; flex-shrink: 0; }
+  .share-invitee-email { color: var(--text3); font-size: 12px; }
   .share-rules {
     font-size: 12px; color: var(--text3);
     line-height: 1.7;
@@ -3881,7 +3904,7 @@ function triggerLogin() {
 }
 
 // ── Share Modal（viral loop）───────────────────────────────────────────
-function showShareModal() {
+async function showShareModal() {
   const modal = document.getElementById('shareModal');
   if (!modal) return;
   const a = window._etfAuth;
@@ -3914,6 +3937,9 @@ function showShareModal() {
       <input id="shareLinkInput" class="share-link-input" readonly value="${link}">
       <button class="share-copy-btn" onclick="copyShareLink()">複製</button>
     </div>
+    <div id="shareInviteesList" class="share-invitees-wrap">
+      <div class="share-invitees-loading">載入中…</div>
+    </div>
     <div class="share-rules">
       · 每邀 1 人 +${TRIAL_REFERRAL_BONUS} 天，最多計 ${TRIAL_REFERRAL_MAX} 人<br>
       · 被邀請者進場時也送 ${TRIAL_BASE_DAYS + TRIAL_INVITED_BONUS} 天（基礎 ${TRIAL_BASE_DAYS} + 被邀 ${TRIAL_INVITED_BONUS}）<br>
@@ -3922,6 +3948,23 @@ function showShareModal() {
   `;
   modal.style.display = '';
   requestAnimationFrame(() => modal.classList.add('show'));
+
+  // Async: fetch and render invitees list
+  if (typeof window._fetchInvitees === 'function') {
+    const invitees = await window._fetchInvitees(uid);
+    const listEl = document.getElementById('shareInviteesList');
+    if (listEl) {
+      if (invitees.length === 0) {
+        listEl.innerHTML = '<div class="share-invitees-empty">還沒有人使用你的連結</div>';
+      } else {
+        listEl.innerHTML = invitees.map(i => `
+          <div class="share-invitee-row">
+            <span class="share-invitee-name">${i.name || i.email.split('@')[0]}</span>
+            <span class="share-invitee-email">${i.email}</span>
+          </div>`).join('');
+      }
+    }
+  }
 }
 
 function closeShareModal() {
@@ -4058,78 +4101,25 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── Timeline horizontal scroll ────────────────────────────────────────────
+// ── Timeline drag-to-scroll (mouse) ──────────────────────────────────────
 (function() {
   const el = document.getElementById('historyWall');
   if (!el) return;
-  let targetX = 0, rafId = null;
-  function smoothStep() {
-    const diff = targetX - el.scrollLeft;
-    if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
-    el.scrollLeft += diff * 0.06;
-    rafId = requestAnimationFrame(smoothStep);
-  }
-  let _mouseActive = false, _modeTimer = null;
-  function mouseWheelHandler(e) {
-    if (!(Math.abs(e.deltaY) >= 50 && Math.abs(e.deltaX) < 5)) { exitMouseMode(); return; }
-    e.preventDefault(); e.stopPropagation();
-    if (!rafId) targetX = el.scrollLeft;
-    targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
-    if (!rafId) rafId = requestAnimationFrame(smoothStep);
-    clearTimeout(_modeTimer);
-    _modeTimer = setTimeout(exitMouseMode, 1200);
-  }
-  function exitMouseMode() {
-    _mouseActive = false;
-    el.removeEventListener('wheel', mouseWheelHandler);
-    clearTimeout(_modeTimer);
-  }
-  el.addEventListener('wheel', e => {
-    if (_mouseActive) return;
-    if (Math.abs(e.deltaY) >= 50 && Math.abs(e.deltaX) < 5) {
-      _mouseActive = true;
-      el.addEventListener('wheel', mouseWheelHandler, { passive: false });
-      clearTimeout(_modeTimer);
-      _modeTimer = setTimeout(exitMouseMode, 1200);
-    }
-  }, { passive: true });
-})();
-
-// ── Shifting date row horizontal scroll ───────────────────────────────────
-(function() {
-  const el = document.getElementById('weightDateRow');
-  if (!el) return;
-  let targetX = 0, rafId = null;
-  function smoothStep() {
-    const diff = targetX - el.scrollLeft;
-    if (Math.abs(diff) < 0.3) { el.scrollLeft = targetX; rafId = null; return; }
-    el.scrollLeft += diff * 0.06;
-    rafId = requestAnimationFrame(smoothStep);
-  }
-  let _mouseActive = false, _modeTimer = null;
-  function mouseWheelHandler(e) {
-    if (!(Math.abs(e.deltaY) >= 50 && Math.abs(e.deltaX) < 5)) { exitMouseMode(); return; }
-    e.preventDefault(); e.stopPropagation();
-    if (!rafId) targetX = el.scrollLeft;
-    targetX = Math.max(0, Math.min(targetX + Math.sign(e.deltaY) * 280, el.scrollWidth - el.clientWidth));
-    if (!rafId) rafId = requestAnimationFrame(smoothStep);
-    clearTimeout(_modeTimer);
-    _modeTimer = setTimeout(exitMouseMode, 1200);
-  }
-  function exitMouseMode() {
-    _mouseActive = false;
-    el.removeEventListener('wheel', mouseWheelHandler);
-    clearTimeout(_modeTimer);
-  }
-  el.addEventListener('wheel', e => {
-    if (_mouseActive) return;
-    if (Math.abs(e.deltaY) >= 50 && Math.abs(e.deltaX) < 5) {
-      _mouseActive = true;
-      el.addEventListener('wheel', mouseWheelHandler, { passive: false });
-      clearTimeout(_modeTimer);
-      _modeTimer = setTimeout(exitMouseMode, 1200);
-    }
-  }, { passive: true });
+  let dragging = false, startX = 0, startScroll = 0;
+  el.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startScroll = el.scrollLeft;
+    el.classList.add('is-dragging');
+    e.preventDefault();
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; el.classList.remove('is-dragging'); }
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    el.scrollLeft = startScroll - (e.clientX - startX);
+  });
 })();
 
 // Close TOS modal when clicking the backdrop
@@ -4455,7 +4445,7 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc, getDocs, serverTimestamp }
+  import { getFirestore, collection, addDoc, setDoc, updateDoc, doc, query, orderBy, onSnapshot, getDoc, getDocs, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
   import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
@@ -4562,7 +4552,7 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
       const memberRef = doc(db, MEMBERS_COL, uid);
       let snap = await getDoc(memberRef);
       if (!snap.exists()) {
-        // Pick up pending ref (set by captureRef IIFE)
+        // New user: create member doc and record referral if present
         let ref = null;
         try { ref = sessionStorage.getItem('etfcross_ref'); } catch (e) {}
         if (ref && (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref))) ref = null;
@@ -4576,12 +4566,33 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
           try {
             await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
               inviteeEmail: user.email || '',
+              inviteeName:  user.displayName || '',
               acceptedAt:   serverTimestamp(),
             });
           } catch (e) { console.warn('[trial] record referral failed:', e); }
         }
         try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
         snap = await getDoc(memberRef);  // re-read for serverTimestamp value
+      } else {
+        // Existing user: if they have a pending ref and haven't been referred yet, bind now
+        const existingData = snap.data() || {};
+        if (!existingData.referredBy) {
+          let ref = null;
+          try { ref = sessionStorage.getItem('etfcross_ref'); } catch (e) {}
+          if (ref && (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref))) ref = null;
+          if (ref) {
+            try {
+              await updateDoc(memberRef, { referredBy: ref, updatedAt: serverTimestamp() });
+              await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
+                inviteeEmail: user.email || '',
+                inviteeName:  user.displayName || '',
+                acceptedAt:   serverTimestamp(),
+              });
+            } catch (e) { console.warn('[trial] late referral bind failed:', e); }
+            try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
+            snap = await getDoc(memberRef);
+          }
+        }
       }
       const data = snap.data() || {};
       const createdAtMs = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
@@ -4599,6 +4610,20 @@ if (typeof window.onNotesPageOpen === "function") window.onNotesPageOpen();
       return null;
     }
   }
+  // Expose invitees list to main script
+  window._fetchInvitees = async function(uid) {
+    try {
+      const snap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitees'));
+      return snap.docs.map(d => ({
+        name:  d.data().inviteeName  || '',
+        email: d.data().inviteeEmail || '',
+      }));
+    } catch (e) {
+      console.warn('[trial] fetch invitees failed:', e);
+      return [];
+    }
+  };
+
   // Expose to main script (for refresh-after-share)
   window._refreshTrialState = async function() {
     if (!auth.currentUser) return;
