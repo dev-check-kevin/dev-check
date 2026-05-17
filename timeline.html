@@ -1120,6 +1120,48 @@
     transition: opacity 0.2s, transform 0.1s;
   }
   .wall-locked-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .wall-locked-btn.is-trial {
+    background: linear-gradient(135deg, #3fb950, #2ea043);
+    color: #0d1117;
+  }
+  .wall-locked-btn.is-visitor {
+    background: linear-gradient(135deg, #4285F4, #3367D6);
+    color: #fff;
+  }
+  .wall-locked-btn-secondary {
+    margin-top: 8px;
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .wall-locked-btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+
+  /* visitor variant: 中性藍邊 + Google 風格 */
+  .wall-group-locked.is-visitor {
+    background: linear-gradient(160deg,
+      color-mix(in srgb, #4285F4 6%, var(--bg3)) 0%,
+      color-mix(in srgb, #4285F4 3%, var(--bg3)) 100%);
+    border: 1px dashed color-mix(in srgb, #4285F4 40%, var(--border));
+  }
+  .wall-group-locked.is-visitor:hover { border-color: #4285F4; }
+
+  /* trial variant: 綠色暖色（禮物感） */
+  .wall-group-locked.is-trial {
+    background: linear-gradient(160deg,
+      color-mix(in srgb, #3fb950 8%, var(--bg3)) 0%,
+      color-mix(in srgb, #3fb950 4%, var(--bg3)) 100%);
+    border: 1px dashed color-mix(in srgb, #3fb950 40%, var(--border));
+  }
+  .wall-group-locked.is-trial:hover { border-color: #3fb950; }
 
   /* ── Shifting: locked date button ── */
   .weight-date-btn-locked {
@@ -1133,6 +1175,24 @@
   .weight-date-btn-locked:hover {
     background: color-mix(in srgb, #d29922 22%, var(--bg2));
     color: #d29922;
+  }
+  .weight-date-btn-locked.is-trial {
+    background: color-mix(in srgb, #3fb950 14%, var(--bg2));
+    border: 1px dashed color-mix(in srgb, #3fb950 50%, transparent);
+    color: #3fb950;
+  }
+  .weight-date-btn-locked.is-trial:hover {
+    background: color-mix(in srgb, #3fb950 22%, var(--bg2));
+    color: #3fb950;
+  }
+  .weight-date-btn-locked.is-visitor {
+    background: color-mix(in srgb, #4285F4 12%, var(--bg2));
+    border: 1px dashed color-mix(in srgb, #4285F4 50%, transparent);
+    color: #4285F4;
+  }
+  .weight-date-btn-locked.is-visitor:hover {
+    background: color-mix(in srgb, #4285F4 20%, var(--bg2));
+    color: #4285F4;
   }
 
   .wall-group-date {
@@ -1854,6 +1914,124 @@
   @media (max-width: 640px) {
     .btn-upgrade-cta { padding: 5px 8px; font-size: 11px; }
     .tier-badge { font-size: 10px; padding: 3px 7px; }
+    .btn-invite-cta { padding: 5px 8px; font-size: 11px; }
+  }
+  .btn-invite-cta {
+    background: transparent;
+    border: 1px solid color-mix(in srgb, #3fb950 40%, transparent);
+    color: #3fb950;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--sans);
+    padding: 6px 10px;
+    margin-right: 6px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .btn-invite-cta:hover {
+    background: color-mix(in srgb, #3fb950 12%, transparent);
+    border-color: #3fb950;
+  }
+
+  /* ── Share Modal ── */
+  .share-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .share-backdrop.show { opacity: 1; }
+  .share-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    max-width: 460px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .share-close {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: none;
+    color: var(--text3); font-size: 18px; cursor: pointer;
+    padding: 4px 8px;
+  }
+  .share-close:hover { color: var(--text); }
+  .share-headline { text-align: center; margin-bottom: 18px; }
+  .share-icon { font-size: 36px; margin-bottom: 6px; }
+  .share-title {
+    font-size: 18px; font-weight: 700;
+    color: var(--text); margin-bottom: 8px;
+  }
+  .share-sub {
+    font-size: 13px; color: var(--text2);
+    line-height: 1.55;
+  }
+  .share-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin: 18px 0 12px;
+  }
+  .share-stat {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .share-stat-num {
+    font-size: 22px; font-weight: 700;
+    color: #3fb950;
+    font-family: var(--mono);
+  }
+  .share-stat-label {
+    font-size: 11px; color: var(--text3);
+    margin-top: 2px;
+  }
+  .share-remaining {
+    text-align: center; font-size: 13px;
+    color: var(--text2); margin-bottom: 12px;
+  }
+  .share-link-row {
+    display: flex; gap: 8px;
+    margin: 12px 0;
+  }
+  .share-link-input {
+    flex: 1; min-width: 0;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .share-copy-btn {
+    background: linear-gradient(135deg, #3fb950, #2ea043);
+    color: #0d1117;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .share-copy-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .share-copy-btn.copied { background: linear-gradient(135deg, #56d364, #3fb950); }
+  .share-rules {
+    font-size: 12px; color: var(--text3);
+    line-height: 1.7;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
   }
 
   /* ── Notes page ── */
@@ -2400,7 +2578,7 @@
   <div class="controls">
     <label>最少涵蓋：</label>
     <select id="minCoverage">
-      <option value="1">全部</option>
+      <option value="1">1 張卡片</option>
       <option value="2" selected>2 張卡片</option>
       <option value="3">3 張卡片</option>
       <option value="4">4 張卡片</option>
@@ -2508,6 +2686,15 @@
         <!-- populated by showUpgradeModal() -->
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── Share Modal (viral loop) ── -->
+<div id="shareModal" class="share-backdrop" style="display:none"
+     onclick="if(event.target===this)closeShareModal()">
+  <div class="share-card">
+    <button class="share-close" onclick="closeShareModal()" aria-label="關閉">✕</button>
+    <div id="shareModalBody"><!-- populated by showShareModal() --></div>
   </div>
 </div>
 
@@ -2909,8 +3096,8 @@ function renderAIFeedback() {
 // Returns true if adding `ticker` to activeFilters is allowed under current tier
 function canAddIntersection(ticker) {
   if (activeFilters.has(ticker)) return true;            // removing is always allowed
-  if (isPaidTier()) return true;                         // founder / pro = no limit
-  return activeFilters.size < CARD_INTERSECTION_LIMIT;   // visitor / member = 5 max
+  if (hasFullAccess()) return true;                      // paid / trial = no limit
+  return activeFilters.size < CARD_INTERSECTION_LIMIT;   // visitor / expired member = 5 max
 }
 
 let _limitHintTimer = null;
@@ -2976,10 +3163,10 @@ function renderHistoryWall(mode = '') {
     return;
   }
 
-  // ★ 5 日過濾（非付費）
+  // ★ 5 日過濾（無完整存取 = visitor / member_loading / expired）
   let visibleData = WALL_DATA;
   let hiddenCount = 0;
-  if (!isPaidTier()) {
+  if (!hasFullAccess()) {
     const latest5Set = new Set(WALL_DATA.slice(0, 5).map(g => g.to_label));
     visibleData = WALL_DATA.filter(g => latest5Set.has(g.to_label));
     hiddenCount = WALL_DATA.length - visibleData.length;
@@ -3070,17 +3257,8 @@ function renderHistoryWall(mode = '') {
     </div>
   `).join('');
 
-  // ★ 升級鎖（位於最舊的一側，視覺上在最左邊）
-  const lockedHtml = hiddenCount > 0 ? `
-    <div class="wall-group wall-group-locked" onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('timeline')">
-      <div class="wall-locked-content">
-        <div class="wall-locked-icon">🔒</div>
-        <div class="wall-locked-title">更多歷史資料</div>
-        <div class="wall-locked-sub">${hiddenCount} 天前的異動記錄<br>僅 Founder / Pro 會員可見</div>
-        <button class="wall-locked-btn">升級查看</button>
-      </div>
-    </div>
-  ` : '';
+  // ★ 狀態感知卡片（位於最舊的一側，視覺上在最左邊）
+  const lockedHtml = _renderTimelineLockCard(hiddenCount);
 
   container.innerHTML = lockedHtml + groupsHtml;
 
@@ -3093,6 +3271,72 @@ function renderHistoryWall(mode = '') {
   });
 }
 
+function _renderShiftingLockBtn(hiddenCount, animStyle) {
+  const s = getTrialState();
+  if (s.state === 'paid' || s.state === 'member_loading') return '';
+  if (s.state === 'trial') {
+    return `<button class="weight-date-btn weight-date-btn-locked is-trial"${animStyle}
+            onclick="if (typeof showShareModal === 'function') showShareModal()"
+            title="試用期還剩 ${s.remainingDays} 天 · 邀請好友延長">🎁 試用 ${s.remainingDays}d</button>`;
+  }
+  if (s.state === 'visitor') {
+    return `<button class="weight-date-btn weight-date-btn-locked is-visitor"${animStyle}
+            onclick="if (typeof triggerLogin === 'function') triggerLogin()">🔒 Google登入</button>`;
+  }
+  // expired
+  if (hiddenCount > 0) {
+    return `<button class="weight-date-btn weight-date-btn-locked"${animStyle}
+            onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('shifting')"
+            title="試用已結束 · 更早 ${hiddenCount} 個交易日僅 Founder/Pro 可見">🔒 +${hiddenCount}</button>`;
+  }
+  return '';
+}
+
+function _renderTimelineLockCard(hiddenCount) {
+  const s = getTrialState();
+  if (s.state === 'paid' || s.state === 'member_loading') return '';
+  if (s.state === 'trial') {
+    const remCount = Math.max(0, TRIAL_REFERRAL_MAX - s.invitedCount);
+    const inviteLine = remCount > 0
+      ? `再邀 ${remCount} 位好友可延長 ${remCount * TRIAL_REFERRAL_BONUS} 天`
+      : `已達邀請上限（${TRIAL_REFERRAL_MAX} 人）`;
+    return `
+      <div class="wall-group wall-group-locked is-trial" onclick="if (typeof showShareModal === 'function') showShareModal()">
+        <div class="wall-locked-content">
+          <div class="wall-locked-icon">🎁</div>
+          <div class="wall-locked-title">試用期還剩 ${s.remainingDays} 天</div>
+          <div class="wall-locked-sub">共 ${s.totalDays} 天試用期 · 已邀 ${s.invitedCount} 人<br>${inviteLine}</div>
+          <button class="wall-locked-btn is-trial">邀請好友 +${TRIAL_REFERRAL_BONUS} 天</button>
+          <button class="wall-locked-btn" style="margin-top:8px" onclick="event.stopPropagation(); showUpgradeModal('trial')">✦ 直接升級</button>
+        </div>
+      </div>`;
+  }
+  if (s.state === 'visitor') {
+    return `
+      <div class="wall-group wall-group-locked is-visitor" onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('timeline')">
+        <div class="wall-locked-content">
+          <div class="wall-locked-icon">🔒</div>
+          <div class="wall-locked-title">實名登入解鎖完整異動工具</div>
+          <button class="wall-locked-btn is-visitor" onclick="event.stopPropagation(); if (typeof triggerLogin === 'function') triggerLogin()">Google 登入</button>
+        </div>
+      </div>`;
+  }
+  // expired
+  if (hiddenCount > 0) {
+    return `
+      <div class="wall-group wall-group-locked" onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('timeline')">
+        <div class="wall-locked-content">
+          <div class="wall-locked-icon">🔒</div>
+          <div class="wall-locked-title">你的試用期已結束</div>
+          <div class="wall-locked-sub">${hiddenCount} 天前的異動記錄<br>僅 Founder / Pro 會員可見</div>
+          <button class="wall-locked-btn">升級查看</button>
+          <button class="wall-locked-btn-secondary" onclick="event.stopPropagation(); if (typeof showShareModal === 'function') showShareModal()">邀請好友延長</button>
+        </div>
+      </div>`;
+  }
+  return '';
+}
+
 // ── Shifting 頁: 日期 button row + 共識/ETF 切換 ─────────────────────────
 // 共用: 把 change.to_label (e.g. "2026/05/14") 對應到 activeWeightDate (e.g. "05/14")
 function _changeMatchesActiveDate(change) {
@@ -3102,7 +3346,7 @@ function _changeMatchesActiveDate(change) {
 
 // Computes visible dates for current tier (already reversed: 舊→新)
 function _getShiftingVisibleDates() {
-  if (isPaidTier()) return [...WEIGHT_ANALYSIS_DATES].reverse();
+  if (hasFullAccess()) return [...WEIGHT_ANALYSIS_DATES].reverse();
   const latest5Set = new Set(WEIGHT_ANALYSIS_DATES.slice(0, 5));
   return [...WEIGHT_ANALYSIS_DATES].reverse().filter(d => latest5Set.has(d));
 }
@@ -3122,13 +3366,8 @@ function renderWeightDateRow(animate = false) {
     ? ` style="animation: weight-btn-in 0.25s ease both; animation-delay: ${i * 8}ms"`
     : '';
 
-  const lockedBtn = hiddenCount > 0 ? `
-    <button class="weight-date-btn weight-date-btn-locked"${animStyle(0)}
-            onclick="if (typeof showUpgradeModal === 'function') showUpgradeModal('shifting')"
-            title="更早的 ${hiddenCount} 個交易日僅付費會員可見">🔒 +${hiddenCount}</button>
-  ` : '';
-
-  const offset = hiddenCount > 0 ? 1 : 0;
+  const lockedBtn = _renderShiftingLockBtn(hiddenCount, animStyle(0));
+  const offset = lockedBtn ? 1 : 0;
   container.innerHTML = lockedBtn + visibleDates.map((d, i) => `
     <button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}"${animStyle(i + offset)}
             onclick="selectWeightDate('${d}')">${d}</button>
@@ -3555,15 +3794,55 @@ function isPaidTier() {
   return t === 'founder' || t === 'pro';
 }
 
+// ── Trial helpers ───────────────────────────────────────────────────────
+// 試用期：登入即送 5 天，被邀請 +3，每邀 1 人 +3（最多 4 人），總上限 17 天
+const TRIAL_BASE_DAYS      = 5;
+const TRIAL_INVITED_BONUS  = 3;
+const TRIAL_REFERRAL_BONUS = 3;
+const TRIAL_REFERRAL_MAX   = 4;
+const TRIAL_MAX_DAYS       = 17;
+
+// Returns: { state, totalDays?, remainingDays?, wasInvited?, invitedCount? }
+// state ∈ 'visitor' | 'member_loading' | 'trial' | 'expired' | 'paid'
+function getTrialState() {
+  const a = window._etfAuth;
+  if (!a?.user || !a?.tosAccepted) return { state: 'visitor' };
+  if (a.patreonTier === 'founder' || a.patreonTier === 'pro') return { state: 'paid' };
+  const t = a.trial;
+  if (!t || !t.createdAtMs) return { state: 'member_loading' };
+  const wasInvited    = !!t.wasInvited;
+  const invitedCount  = Math.max(0, t.invitedCount | 0);
+  const cappedInvites = Math.min(invitedCount, TRIAL_REFERRAL_MAX);
+  const totalDays = Math.min(
+    TRIAL_BASE_DAYS
+      + (wasInvited ? TRIAL_INVITED_BONUS : 0)
+      + cappedInvites * TRIAL_REFERRAL_BONUS,
+    TRIAL_MAX_DAYS
+  );
+  const expiresAtMs  = t.createdAtMs + totalDays * 86400000;
+  const remainingMs  = expiresAtMs - Date.now();
+  const remainingDays = Math.max(0, Math.ceil(remainingMs / 86400000));
+  return {
+    state: remainingDays > 0 ? 'trial' : 'expired',
+    totalDays, remainingDays, wasInvited, invitedCount,
+  };
+}
+
+// 完整解鎖 = 已付費 或 試用中（涵蓋歷史深度、卡片交集、追蹤上限、多卡片）
+function hasFullAccess() {
+  const s = getTrialState();
+  return s.state === 'paid' || s.state === 'trial';
+}
+
 function getTrackingLimit() {
+  if (hasFullAccess()) return PORTFOLIO_LIMIT_PAID;
   const tier = getUserTier();
-  if (tier === 'founder' || tier === 'pro') return PORTFOLIO_LIMIT_PAID;
   if (tier === 'member') return PORTFOLIO_LIMIT_MEMBER;
   return PORTFOLIO_LIMIT_VISITOR;
 }
 
 function getCardIntersectionLimit() {
-  return isPaidTier() ? Infinity : CARD_INTERSECTION_LIMIT;
+  return hasFullAccess() ? Infinity : CARD_INTERSECTION_LIMIT;
 }
 
 // Legacy alias (existing call sites)
@@ -3582,12 +3861,89 @@ function renderUpgradeButtons() {
     area.innerHTML = `<span class="tier-badge tier-badge-pro" title="Pro 會員">✦ Pro</span>`;
     return;
   }
-  // Visitor / member: show upgrade CTA
+  // Visitor (not logged in): no upgrade button shown
+  if (tier === 'visitor') { area.innerHTML = ''; return; }
+  // Member / visitor: upgrade CTA + 邀請按鈕（僅登入後）
+  const inviteBtn = (tier === 'member')
+    ? `<button class="btn-invite-cta" onclick="showShareModal()" title="邀請好友，雙方各 +${TRIAL_REFERRAL_BONUS} 天試用">🎁 邀請</button>`
+    : '';
   area.innerHTML = `
+    ${inviteBtn}
     <button class="btn-upgrade-cta" onclick="showUpgradeModal('cta')" title="升級解鎖完整功能">
       ✦ 升級
     </button>
   `;
+}
+
+// ── Login trigger（給 lock 卡片用）─────────────────────────────────────
+function triggerLogin() {
+  if (typeof window._triggerLogin === 'function') window._triggerLogin();
+}
+
+// ── Share Modal（viral loop）───────────────────────────────────────────
+function showShareModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  const a = window._etfAuth;
+  if (!a?.user) { triggerLogin(); return; }
+  const uid    = a.user.uid;
+  const origin = location.origin + location.pathname.replace(/[^/]*$/, '');
+  const link   = origin + '?ref=' + uid;
+  const s = getTrialState();
+  const invitedCount  = s.invitedCount || 0;
+  const cappedInvites = Math.min(invitedCount, TRIAL_REFERRAL_MAX);
+  const gainedDays    = cappedInvites * TRIAL_REFERRAL_BONUS;
+  const remCount      = Math.max(0, TRIAL_REFERRAL_MAX - invitedCount);
+  const remainingTxt  = s.state === 'trial'
+    ? `試用期還剩 <b style="color:#3fb950">${s.remainingDays} 天</b>（共 ${s.totalDays} 天）`
+    : (s.state === 'expired' ? '<b style="color:var(--text2)">你的試用期已結束</b>，可重新累積邀請延長' : '');
+  document.getElementById('shareModalBody').innerHTML = `
+    <div class="share-headline">
+      <div class="share-icon">🎁</div>
+      <div class="share-title">邀請好友，雙方各 +${TRIAL_REFERRAL_BONUS} 天試用</div>
+      <div class="share-sub">朋友透過你的連結登入後，雙方都會獲得 ${TRIAL_REFERRAL_BONUS} 天試用延長。</div>
+      <div class="share-sub">試用期間享全功能。</div>
+    </div>
+    <div class="share-stats">
+      <div class="share-stat"><div class="share-stat-num">${invitedCount}</div><div class="share-stat-label">已邀人數</div></div>
+      <div class="share-stat"><div class="share-stat-num">+${gainedDays}</div><div class="share-stat-label">已延長 (天)</div></div>
+      <div class="share-stat"><div class="share-stat-num">${TRIAL_MAX_DAYS}</div><div class="share-stat-label">試用上限 (天)</div></div>
+    </div>
+    ${remainingTxt ? `<div class="share-remaining">${remainingTxt}</div>` : ''}
+    <div class="share-link-row">
+      <input id="shareLinkInput" class="share-link-input" readonly value="${link}">
+      <button class="share-copy-btn" onclick="copyShareLink()">複製</button>
+    </div>
+    <div class="share-rules">
+      · 每邀 1 人 +${TRIAL_REFERRAL_BONUS} 天，最多計 ${TRIAL_REFERRAL_MAX} 人<br>
+      · 被邀請者進場時也送 ${TRIAL_BASE_DAYS + TRIAL_INVITED_BONUS} 天（基礎 ${TRIAL_BASE_DAYS} + 被邀 ${TRIAL_INVITED_BONUS}）<br>
+      · 還可再邀 <b>${remCount}</b> 人（試用上限 ${TRIAL_MAX_DAYS} 天）
+    </div>
+  `;
+  modal.style.display = '';
+  requestAnimationFrame(() => modal.classList.add('show'));
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('shareModal');
+  if (!modal) return;
+  modal.classList.remove('show');
+  setTimeout(() => { modal.style.display = 'none'; }, 200);
+}
+
+async function copyShareLink() {
+  const input = document.getElementById('shareLinkInput');
+  const btn   = document.querySelector('.share-copy-btn');
+  if (!input || !btn) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+    const orig = btn.textContent;
+    btn.textContent = '已複製 ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1800);
+  } catch (e) {
+    input.select(); document.execCommand && document.execCommand('copy');
+  }
 }
 
 // ── Upgrade Modal ───────────────────────────────────────────────────────
@@ -3596,6 +3952,7 @@ const PATREON_PRO_URL     = 'https://www.patreon.com/checkout/etfcross?rid=28498
 
 async function showUpgradeModal(context) {
   if (isPaidTier()) return;
+  if (getUserTier() === 'visitor') { triggerLogin(); return; }
 
   const modal = document.getElementById('upgradeModal');
   const plansEl = document.getElementById('plPlans');
@@ -3691,12 +4048,22 @@ function _promptLoginThenUpgrade(tier) {
   if (loginBtn) loginBtn.click();
 }
 
-// ESC closes upgrade modal
+// ESC closes upgrade / share modals
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     const m = document.getElementById('upgradeModal');
     if (m && m.style.display !== 'none') closeUpgradeModal();
+    const s = document.getElementById('shareModal');
+    if (s && s.style.display !== 'none') closeShareModal();
   }
+});
+
+// Close TOS modal when clicking the backdrop
+document.addEventListener('click', e => {
+  const modal = document.getElementById('tosModal');
+  if (!modal || !modal.classList.contains('show')) return;
+  const card = modal.querySelector('.tos-card');
+  if (card && !card.contains(e.target)) modal.classList.remove('show');
 });
 
 // Called by Firebase module when auth state changes; re-renders cards + modal
@@ -3768,9 +4135,9 @@ let _tempActiveCardIdx = 0;
 let _ddItems = [], _ddIdx = -1;
 
 function openPortfolioModal() {
-  if (isPaidTier()) {
+  if (hasFullAccess()) {
     if (myCards.length === 0) {
-      // First open as paid: migrate existing stocks into card 0
+      // First open with full access: migrate existing stocks into card 0
       _tempCards = CARD_NAMES_DEFAULT.map((name, i) => ({
         name,
         stocks: i === 0 ? new Set(myPortfolio) : new Set()
@@ -3800,7 +4167,7 @@ function closePortfolioModal() {
 function renderPaidCardTabs() {
   const bar = document.getElementById('pmCardTabBar');
   if (!bar) return;
-  if (!isPaidTier()) { bar.style.display = 'none'; return; }
+  if (!hasFullAccess()) { bar.style.display = 'none'; return; }
   bar.style.display = '';
   bar.innerHTML = _tempCards.map((card, i) => `
     <div class="pm-card-tab ${i === _tempActiveCardIdx ? 'active' : ''}"
@@ -3850,7 +4217,7 @@ async function savePortfolioModal() {
   if (btn) btn.disabled = true;
 
   try {
-    if (isPaidTier()) {
+    if (hasFullAccess()) {
       _tempCards[_tempActiveCardIdx].stocks = new Set(_tempPortfolio);
       myCards = _tempCards.map((c, i) => ({ id: i, name: c.name, stocks: new Set(c.stocks) }));
       myPortfolio = new Set(myCards.flatMap(c => [...c.stocks]));
@@ -3888,7 +4255,7 @@ function handleSavePortfolio() {
 function renderModalChips() {
   const wrap  = document.getElementById('modalChips');
   if (!wrap) return;
-  const limit   = isPaidTier() ? CARDS_LIMIT_PER_CARD : getTrackingLimit();
+  const limit   = hasFullAccess() ? CARDS_LIMIT_PER_CARD : getTrackingLimit();
   const isFull  = _tempPortfolio.size >= limit;
   const inp     = document.getElementById('modalInput');
   if (inp) inp.disabled = isFull;
@@ -3987,7 +4354,7 @@ function onPortfolioKeydown(e) {
 function selectModalItem(i) {
   const [code] = _ddItems[i];
   if (!_tempPortfolio.has(code)) {
-    if (_tempPortfolio.size >= (isPaidTier() ? CARDS_LIMIT_PER_CARD : getTrackingLimit())) return;
+    if (_tempPortfolio.size >= (hasFullAccess() ? CARDS_LIMIT_PER_CARD : getTrackingLimit())) return;
     _tempPortfolio.add(code);
     renderModalChips();
   }
@@ -4013,7 +4380,7 @@ renderHistoryWall('add');
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc }
+  import { getFirestore, collection, addDoc, setDoc, doc, query, orderBy, onSnapshot, getDoc, getDocs, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
   import { getFunctions, httpsCallable }
     from "https://www.gstatic.com/firebasejs/11.10.0/firebase-functions.js";
@@ -4033,6 +4400,19 @@ renderHistoryWall('add');
   const functions = getFunctions(app);
   const provider  = new GoogleAuthProvider();
   const authArea  = document.getElementById('authArea');
+
+  // ── Referral: 解析 URL ?ref= 並暫存到 sessionStorage（登入流程跳轉時保留）
+  (function captureRef() {
+    try {
+      const ref = new URLSearchParams(location.search).get('ref');
+      if (ref && /^[A-Za-z0-9_-]{8,40}$/.test(ref)) {
+        sessionStorage.setItem('etfcross_ref', ref);
+        const url = new URL(location);
+        url.searchParams.delete('ref');
+        history.replaceState({}, '', url);
+      }
+    } catch (e) { console.warn('captureRef failed', e); }
+  })();
 
   // ── Patreon OAuth config ──────────────────────────────────────────────────
   const PATREON_CLIENT_ID = 'atont0WtRpJbL_dCGF7zqQZLxZAaNmwT8yEvgYYfzCjDFg-59xmaATz4IpLt5zL6';
@@ -4069,6 +4449,8 @@ renderHistoryWall('add');
   const NOTES_COL      = collection(db, 'dev_notes');
   const TOS_COL_ROOT   = 'dev_tos_acceptances';
   const PORTFOLIO_COL  = collection(db, 'dev_portfolios');
+  const MEMBERS_COL    = 'dev_members';
+  const REFERRALS_COL  = 'dev_referrals';
   const MAX_NOTES      = 15;
   const TOS_VERSION        = 'v1';
   const TOS_FORCE_REACCEPT = false;
@@ -4078,8 +4460,8 @@ renderHistoryWall('add');
   let unsubNotes     = null;
   let _skipNextModal = false;
 
-  // Bridge object: main script reads this for portfolio limit decisions
-  window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null };
+  // Bridge object: main script reads this for portfolio limit / trial decisions
+  window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null, trial: null };
 
   // Helper: fetch patreonAccess/{uid} and return {tier, verifiedAt} or {tier:null}
   async function _fetchPatreonAccess(uid) {
@@ -4096,6 +4478,61 @@ renderHistoryWall('add');
     }
     return { tier: null, verifiedAt: null };
   }
+
+  // Helper: load or create members/{uid} + count invitees → returns trial state
+  // Returns { createdAtMs, wasInvited, invitedCount } or null on failure
+  async function _loadOrCreateMember(user) {
+    const uid = user.uid;
+    try {
+      const memberRef = doc(db, MEMBERS_COL, uid);
+      let snap = await getDoc(memberRef);
+      if (!snap.exists()) {
+        // Pick up pending ref (set by captureRef IIFE)
+        let ref = null;
+        try { ref = sessionStorage.getItem('etfcross_ref'); } catch (e) {}
+        if (ref && (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref))) ref = null;
+        await setDoc(memberRef, {
+          email:      user.email || '',
+          createdAt:  serverTimestamp(),
+          referredBy: ref || null,
+          updatedAt:  serverTimestamp(),
+        });
+        if (ref) {
+          try {
+            await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
+              inviteeEmail: user.email || '',
+              acceptedAt:   serverTimestamp(),
+            });
+          } catch (e) { console.warn('[trial] record referral failed:', e); }
+        }
+        try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
+        snap = await getDoc(memberRef);  // re-read for serverTimestamp value
+      }
+      const data = snap.data() || {};
+      const createdAtMs = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
+      const wasInvited  = !!data.referredBy;
+
+      let invitedCount = 0;
+      try {
+        const invSnap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitees'));
+        invitedCount = invSnap.size;
+      } catch (e) { console.warn('[trial] count invitees failed:', e); }
+
+      return { createdAtMs, wasInvited, invitedCount };
+    } catch (e) {
+      console.warn('[trial] loadOrCreateMember failed:', e);
+      return null;
+    }
+  }
+  // Expose to main script (for refresh-after-share)
+  window._refreshTrialState = async function() {
+    if (!auth.currentUser) return;
+    const trial = await _loadOrCreateMember(auth.currentUser);
+    if (trial && window._etfAuth) {
+      window._etfAuth.trial = trial;
+      if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
+    }
+  };
 
   // ── LocalStorage key constants ─────────────────────────────────────────
   const LS_GUEST_VISITED  = 'etf_guest_visited';
@@ -4179,7 +4616,8 @@ renderHistoryWall('add');
     const tosAccepted = checkTosAccepted();
     const prevTier         = window._etfAuth?.patreonTier      ?? null;
     const prevVerifiedAt   = window._etfAuth?.patreonVerifiedAt ?? null;
-    window._etfAuth = { user, tosAccepted, patreonTier: prevTier, patreonVerifiedAt: prevVerifiedAt };
+    const prevTrial        = window._etfAuth?.trial             ?? null;
+    window._etfAuth = { user, tosAccepted, patreonTier: prevTier, patreonVerifiedAt: prevVerifiedAt, trial: prevTrial };
     if (_skipNextModal) { _skipNextModal = false; return; }
     if (!opts.force && !_shouldShowModal(user)) return;
     const modal = document.getElementById('tosModal');
@@ -4247,15 +4685,21 @@ renderHistoryWall('add');
           if (mode === 'login') {
             const result = await signInWithPopup(auth, provider);
             await recordTosAcceptance(result.user);
-            const pa = await _fetchPatreonAccess(result.user.uid);
-            window._etfAuth = { user: result.user, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
+            const [pa, trial] = await Promise.all([
+              _fetchPatreonAccess(result.user.uid),
+              _loadOrCreateMember(result.user),
+            ]);
+            window._etfAuth = { user: result.user, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt, trial };
             if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
             _skipNextModal = true;
             closeCombinedModal();
           } else if (mode === 'reaccept') {
             await recordTosAcceptance(currentUser);
-            const pa = await _fetchPatreonAccess(currentUser.uid);
-            window._etfAuth = { user: currentUser, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
+            const [pa, trial] = await Promise.all([
+              _fetchPatreonAccess(currentUser.uid),
+              _loadOrCreateMember(currentUser),
+            ]);
+            window._etfAuth = { user: currentUser, tosAccepted: true, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt, trial };
             if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
             closeCombinedModal();
           } else {
@@ -4301,6 +4745,11 @@ renderHistoryWall('add');
       openCombinedModal(null, { startTab: ANN_VERSION ? 'tos-ann' : 'tos-terms', force: true })
     );
   }
+
+  // Expose to main script: any lock card / button can trigger login modal
+  window._triggerLogin = () => openCombinedModal(null, {
+    startTab: ANN_VERSION ? 'tos-ann' : 'tos-terms', force: true
+  });
 
   // ── Notes ────────────────────────────────────────────────────────────────
   function fmtTime(ts) {
@@ -4484,18 +4933,19 @@ renderHistoryWall('add');
     currentUser = user;
     if (user) {
       renderLoggedIn(user);
-      // Fetch patreon tier in parallel with portfolio
-      const [pa] = await Promise.all([
+      // Fetch patreon tier + portfolio + member trial state in parallel
+      const [pa, , trial] = await Promise.all([
         _fetchPatreonAccess(user.uid),
         loadUserPortfolio(user.uid),
+        _loadOrCreateMember(user),
       ]);
       const tosAccepted = checkTosAccepted();
-      window._etfAuth = { user, tosAccepted, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt };
+      window._etfAuth = { user, tosAccepted, patreonTier: pa.tier, patreonVerifiedAt: pa.verifiedAt, trial };
     }
     else      {
       renderLoggedOut();
       myPortfolio = new Set(JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || '[]'));
-      window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null };
+      window._etfAuth = { user: null, tosAccepted: false, patreonTier: null, patreonVerifiedAt: null, trial: null };
       renderETFCards();
       restoreCardActiveStates();
       renderTable();
