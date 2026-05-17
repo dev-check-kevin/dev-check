@@ -4574,24 +4574,36 @@ renderHistoryWall('add');
         try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
         snap = await getDoc(memberRef);  // re-read for serverTimestamp value
       } else {
-        // Existing user: if they have a pending ref and haven't been referred yet, bind now
+        // Existing user: bind referral if not yet referred
         const existingData = snap.data() || {};
-        if (!existingData.referredBy) {
-          let ref = null;
-          try { ref = sessionStorage.getItem('etfcross_ref'); } catch (e) {}
-          if (ref && (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref))) ref = null;
+        const pendingRef = (() => { try { return sessionStorage.getItem('etfcross_ref'); } catch(e) { return null; } })();
+        console.log('[ref] existing user', uid, '| referredBy:', existingData.referredBy, '| sessionRef:', pendingRef);
+        if (!existingData.referredBy && pendingRef) {
+          let ref = pendingRef;
+          if (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref)) {
+            console.warn('[ref] invalid ref (self or bad format):', ref);
+            ref = null;
+          }
           if (ref) {
             try {
               await updateDoc(memberRef, { referredBy: ref, updatedAt: serverTimestamp() });
+              console.log('[ref] member referredBy updated');
               await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
                 inviteeEmail: user.email || '',
                 inviteeName:  user.displayName || '',
                 acceptedAt:   serverTimestamp(),
               });
-            } catch (e) { console.warn('[trial] late referral bind failed:', e); }
+              console.log('[ref] invitee record written to', REFERRALS_COL, ref, 'invitees', uid);
+            } catch (e) {
+              console.error('[ref] late referral bind FAILED:', e.code, e.message, e);
+            }
             try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
             snap = await getDoc(memberRef);
           }
+        } else if (existingData.referredBy) {
+          console.log('[ref] already referred by', existingData.referredBy, '— skip');
+        } else {
+          console.log('[ref] no pending sessionRef — skip');
         }
       }
       const data = snap.data() || {};
