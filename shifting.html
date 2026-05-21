@@ -3986,9 +3986,7 @@ function setupWallSearch() {
       nextBtn.disabled = true;
       return;
     }
-    const m = matches[cursor];
-    const kindZh = m.kind === 'added' ? '新增' : m.kind === 'followup' ? '加碼' : '移出';
-    countEl.textContent = `${cursor + 1}/${matches.length} · ${m.dateLabel} ${kindZh}`;
+    countEl.textContent = `${cursor + 1}/${matches.length}`;
     countEl.classList.remove('is-empty');
     prevBtn.disabled = matches.length <= 1;
     nextBtn.disabled = matches.length <= 1;
