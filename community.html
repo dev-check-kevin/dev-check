@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" style="background:#0a0d12;">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PM68TTQE3"></script>
@@ -2587,8 +2587,7 @@
   }
 
   .intro-status {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     width: 380px; max-width: 70vw;
     z-index: 2;
     display: flex; flex-direction: column; gap: 14px; align-items: center;
@@ -4268,8 +4267,8 @@ async function copyShareLink() {
 }
 
 // ── Upgrade Modal ───────────────────────────────────────────────────────
-const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28490004&is_free_trial=true';
-const PATREON_PRO_URL     = 'https://www.patreon.com/checkout/etfcross?rid=28498975&is_free_trial=true';
+const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28626647&vanity=15944369&is_free_trial=true';
+// const PATREON_PRO_URL  = '...';  // Pro 尚未開放，連結先註解掉
 
 async function showUpgradeModal(context) {
   if (isPaidTier()) return;
@@ -4300,19 +4299,21 @@ async function showUpgradeModal(context) {
           ? (founderFull ? '名額已滿' : `限早鳥 · 剩 ${founderRem} 名`)
           : '限 500 名伯樂<br>永久不漲價',
         features: ['支持伺服器與雲端空間的費用', '解鎖所有軟體進階功能','(無限卡片交集 / 追蹤 50 檔 / 完整歷史異動)','含未來所有新功能'],
-        price: 5, unit: 'USD / 月', url: PATREON_FOUNDER_URL, full: founderFull,
+        price: 6, unit: 'USD / 月', url: PATREON_FOUNDER_URL, full: founderFull,
       },
       {
         id: 'pro', name: 'Pro會員',
         note: '',
         features: ['(尚未開放)'],
-        price: 9, unit: 'USD / 月', url: PATREON_PRO_URL, full: proFull,
+        price: 12, unit: 'USD / 月', url: null, full: proFull, disabled: true,
       },
     ];
 
-    return plans.map(p => `
-      <button class="pl-plan${p.full ? ' full' : ''}"
-              ${p.full ? '' : `onclick="window.open('${p.url}', '_blank', 'noopener')"`}>
+    return plans.map(p => {
+      const inactive = p.full || p.disabled;
+      return `
+      <button class="pl-plan${inactive ? ' full' : ''}"
+              ${inactive ? '' : `onclick="window.open('${p.url}', '_blank', 'noopener')"`}>
         <div>
           <div class="pl-plan-name">${p.name}</div>
           <div class="pl-plan-note">${p.note}</div>
@@ -4320,10 +4321,11 @@ async function showUpgradeModal(context) {
         <div class="pl-plan-feats">${p.features.join('<br>')}</div>
         <div class="pl-plan-price">${p.full
           ? '<span style="font-size:13px;color:#9a8a6c">名額已滿</span>'
-          : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-cancel">7天內隨時可取消</div>`
+          : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span>${p.disabled ? '' : '<div class="pl-plan-cancel">7天內隨時可取消</div>'}`
         }</div>
       </button>
-    `).join('') + '<div class="pl-plan-div"></div>';
+    `;
+    }).join('') + '<div class="pl-plan-div"></div>';
   };
 
   plansEl.innerHTML = renderPlans(null);
