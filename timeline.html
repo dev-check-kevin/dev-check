@@ -3735,7 +3735,7 @@ function renderHistoryWall(mode = '') {
       </div>
       <div class="wall-etf-numbers-row">
         <div class="wall-etf-shares-block">
-          <span class="wall-etf-shares-big wall-shares-add${sharesBigClass}">+${sumShares.toLocaleString()}<span class="wall-etf-shares-unit">張</span></span>
+          <span class="wall-etf-shares-big wall-shares-add${sharesBigClass}">${sumShares.toLocaleString()}<span class="wall-etf-shares-unit">張</span></span>
         </div>
         <div class="wall-etf-numbers-right">
           <div class="wall-etf-cost-block"><span class="wall-etf-cost">${totalCost.value}${totalCost.unit ? `<span class="wall-etf-cost-unit">${totalCost.unit}</span>` : ''}</span><span class="wall-etf-cost-tag">(估算最低總成本)</span></div>
