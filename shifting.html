@@ -2993,7 +2993,7 @@
     position: fixed; inset: 0; z-index: 5000;
     background: #0a0d12;
     display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.7s ease, filter 0.7s ease;
+    transition: opacity 0.3s ease, filter 0.3s ease;
   }
   #intro-overlay.exit { opacity: 0; filter: blur(8px); pointer-events: none; }
   /* 同站切頁時跳過開場動畫（pre-paint 由 head script 加上 .intro-seen） */
@@ -5964,6 +5964,17 @@ function wait(ms) {
 }
 
 
+// ── _introReady 訊號：wrap finishIntro，在 overlay 開始淡出時立即發出 ──
+(function() {
+  var _orig = finishIntro;
+  finishIntro = function() {
+    window._introReady = true;
+    (window._introReadyCallbacks || []).forEach(function(fn) { fn(); });
+    window._introReadyCallbacks = [];
+    _orig();
+  };
+})();
+
 // ── Intro cards: 隨機填入主動式 ETF 資料 ──
 (function() {
   const etfs = [{"ticker": "00981A", "name": "主動統一台股增長", "aum": "2,909 億", "price": 31.97, "holdings": 51, "added": 0, "removed": 0, "changed": 37, "date": "06/03"}, {"ticker": "00403A", "name": "主動統一升級50", "aum": "1,916 億", "price": 10.87, "holdings": 50, "added": 1, "removed": 1, "changed": 43, "date": "06/03"}, {"ticker": "00991A", "name": "主動復華未來50", "aum": "599 億", "price": 20.03, "holdings": 50, "added": 0, "removed": 0, "changed": 28, "date": "06/03"}, {"ticker": "00982A", "name": "主動群益台灣強棒", "aum": "540 億", "price": 24.29, "holdings": 55, "added": 0, "removed": 1, "changed": 47, "date": "06/03"}, {"ticker": "00988A", "name": "主動統一全球創新", "aum": "521 億", "price": 22.16, "holdings": 13, "added": 0, "removed": 0, "changed": 13, "date": "06/03"}, {"ticker": "00992A", "name": "主動群益科技創新", "aum": "496 億", "price": 18.61, "holdings": 45, "added": 0, "removed": 0, "changed": 45, "date": "06/03"}, {"ticker": "00990A", "name": "主動元大AI新經濟", "aum": "405 億", "price": 20.63, "holdings": 13, "added": 0, "removed": 0, "changed": 13, "date": "06/03"}, {"ticker": "00400A", "name": "主動國泰動能高息", "aum": "227 億", "price": 15.08, "holdings": 51, "added": 0, "removed": 0, "changed": 44, "date": "06/03"}];
@@ -5990,6 +6001,8 @@ document.getElementById('intro-skip')?.addEventListener('click', finishIntro);
 // 由 head 的 pre-paint script 決定：同站切頁進來會有 .intro-seen，CSS 已隱藏 overlay → 直接略過
 if (!document.documentElement.classList.contains('intro-seen')) {
   runIntro().catch(() => finishIntro());
+} else {
+  window._introReady = true;
 }
 </script>
 
@@ -6623,7 +6636,6 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       renderUniqueTable();
     }
     updateInputArea(user);
-    openCombinedModal(user);
     if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
   });
 
