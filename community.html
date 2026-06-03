@@ -2376,16 +2376,35 @@
     white-space: nowrap;
   }
   @keyframes founder-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0);    border-color: color-mix(in srgb, #3fb950 40%, transparent); }
-    50%       { box-shadow: 0 0 7px 3px rgba(212,175,55,0.55); border-color: #d4af37; }
+    0%, 100% { box-shadow: inset 0 1px 0 rgba(255,220,140,0.22), inset 0 -1px 0 rgba(0,0,0,0.25), 0 0 0 0 rgba(232,197,108,0); border-color: #806835; }
+    50%       { box-shadow: inset 0 1px 0 rgba(255,220,140,0.22), inset 0 -1px 0 rgba(0,0,0,0.25), 0 0 10px 3px rgba(232,197,108,0.5); border-color: #e8c56c; }
   }
   .tier-badge-founder {
-    background: color-mix(in srgb, #3fb950 18%, var(--bg2));
-    color: #3fb950;
-    border: 1px solid color-mix(in srgb, #3fb950 40%, transparent);
+    padding: 4px 11px 4px 9px;
+    border-radius: 999px;
+    gap: 6px;
+    background: linear-gradient(180deg, #3a2f1a 0%, #2a2212 100%);
+    border: 1px solid #806835;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 220, 140, 0.22),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 0 12px -4px rgba(232, 197, 108, 0.35);
+    color: #e8c56c;
     animation: founder-glow 0.85s ease 2;
     animation-delay: 0.35s;
   }
+  .tier-badge-founder svg { flex-shrink: 0; }
+  .founder-badge--note {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px 2px 6px; border-radius: 999px;
+    background: linear-gradient(180deg, #3a2f1a 0%, #2a2212 100%);
+    border: 1px solid #806835;
+    box-shadow: inset 0 1px 0 rgba(255,220,140,0.18), 0 0 8px -3px rgba(232,197,108,0.3);
+    color: #e8c56c; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.3px; line-height: 1;
+    white-space: nowrap; user-select: none; vertical-align: middle;
+  }
+  .founder-badge--note svg { flex-shrink: 0; }
   @keyframes pro-glow {
     0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0);       border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
     50%       { box-shadow: 0 0 7px 3px rgba(212,175,55,0.55); border-color: #d4af37; }
@@ -2647,7 +2666,7 @@
     font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
   }
   .note-meta { flex: 1; min-width: 0; }
-  .note-author { font-size: 13px; font-weight: 600; color: var(--text); }
+  .note-author { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
   .note-time { font-size: 11px; color: var(--text3); margin-top: 1px; }
   .note-content {
     font-size: 14px; color: var(--text); line-height: 1.65;
@@ -5039,7 +5058,7 @@ function renderUpgradeButtons() {
   if (!area) return;
   const tier = getUserTier();
   if (tier === 'founder') {
-    area.innerHTML = `<span class="tier-badge tier-badge-founder" title="創始會員">✦ Founder</span>`;
+    area.innerHTML = `<span class="tier-badge tier-badge-founder" title="創始會員"><svg width="10" height="10" viewBox="0 0 11 11" fill="none" aria-hidden="true"><path d="M5.5 0.5L6.5 3.8L9.8 4.8L6.5 5.8L5.5 9.1L4.5 5.8L1.2 4.8L4.5 3.8L5.5 0.5Z" fill="#f0d685"/><path d="M9 6.5L9.4 7.8L10.7 8.2L9.4 8.6L9 9.9L8.6 8.6L7.3 8.2L8.6 7.8L9 6.5Z" fill="#f0d685" opacity="0.7"/></svg>Founder</span>`;
     return;
   }
   if (tier === 'pro') {
@@ -6445,12 +6464,15 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     const avatar = d.photoURL
       ? `<img class="note-avatar" src="${d.photoURL}" referrerpolicy="no-referrer">`
       : `<div class="note-avatar-fallback">${initial}</div>`;
+    const founderBadge = d.patreonTier === 'founder'
+      ? '<span class="founder-badge--note" title="創始會員"><svg width="8" height="8" viewBox="0 0 11 11" fill="none"><path d="M5.5 0.5L6.5 3.8L9.8 4.8L6.5 5.8L5.5 9.1L4.5 5.8L1.2 4.8L4.5 3.8L5.5 0.5Z" fill="#f0d685"/></svg>Founder</span>'
+      : '';
     return `
       <div class="note-card ${isOwn ? 'own' : ''}">
         <div class="note-header">
           ${avatar}
           <div class="note-meta">
-            <div class="note-author">${d.displayName || d.email}</div>
+            <div class="note-author">${d.displayName || d.email}${founderBadge}</div>
             <div class="note-time">${fmtTime(d.createdAt)}</div>
           </div>
         </div>
@@ -6506,6 +6528,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
             displayName: user.displayName || '',
             email:       user.email || '',
             photoURL:    user.photoURL || '',
+            patreonTier: getUserTier(),
             content:     content,
             createdAt:   new Date(),
           });
