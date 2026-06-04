@@ -5006,6 +5006,8 @@ function isPaidTier() {
 
 // ── Trial helpers ───────────────────────────────────────────────────────
 // 試用期：登入即送 5 天，被邀請 +3，每邀 1 人 +3（最多 3 人），總上限 17 天 = 5 + 3 + 3*3
+// ⚠️ 後端 backend/functions/src/trialMath.ts 為 trialEndsAt 的權威來源；此處
+//    為顯示用（totalDays）與 fallback 計算，兩邊常數須一致。
 const TRIAL_BASE_DAYS      = 5;
 const TRIAL_INVITED_BONUS  = 3;
 const TRIAL_REFERRAL_BONUS = 3;
@@ -5029,7 +5031,14 @@ function getTrialState() {
       + cappedInvites * TRIAL_REFERRAL_BONUS,
     TRIAL_MAX_DAYS
   );
-  const expiresAtMs  = t.createdAtMs + totalDays * 86400000;
+  // Authoritative expiry: backend (trialTriggers.ts) writes members.trialEndsAt
+  // anchored to the bonus *acquisition time*, so a bonus earned after the base
+  // window lapsed still re-opens the trial. Fall back to the legacy
+  // createdAt-anchored estimate for members not yet written by the trigger
+  // (pre-backfill). totalDays stays as the "total days granted" display value.
+  const expiresAtMs  = (typeof t.trialEndsAtMs === 'number' && t.trialEndsAtMs > 0)
+    ? t.trialEndsAtMs
+    : t.createdAtMs + totalDays * 86400000;
   const remainingMs  = expiresAtMs - Date.now();
   const remainingDays = Math.max(0, Math.ceil(remainingMs / 86400000));
   return {
@@ -5311,9 +5320,11 @@ async function showMembershipModal() {
     return plans.map(p => {
       const isCurrent = (tier === p.id);
       const inactive = p.full || p.disabled;
+      const clickable = !inactive && !isCurrent;
       return `
       <button class="pl-plan${inactive ? ' full' : ''}${isCurrent ? ' pl-plan--current' : ''}"
-              ${inactive ? '' : `onclick="window.open('${p.url}', '_blank', 'noopener')"`}>
+              style="${clickable ? '' : 'cursor:default'}"
+              ${clickable ? `onclick="window.open('${p.url}', '_blank', 'noopener')"` : ''}>
         <div>
           <div class="pl-plan-name">${p.name}</div>
           <div class="pl-plan-note">${p.note}</div>
@@ -5322,7 +5333,7 @@ async function showMembershipModal() {
         <div class="pl-plan-price">${p.full
           ? '<span style="font-size:13px;color:#9a8a6c">名額已滿</span>'
           : (isCurrent
-            ? '<span style="font-size:11px;color:#d29922">✓ 目前方案</span>'
+            ? `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div style="font-size:11px;color:#d29922;margin-top:4px">✓ 目前方案</div>`
             : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span>${p.disabled ? '' : '<div class="pl-plan-cancel">7天內隨時可取消</div><div class="pl-plan-cancel">訂閱在 Patreon 完成</div>'}`
           )
         }</div>
@@ -6271,6 +6282,9 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       const data = snap.data() || {};
       const createdAtMs = data.createdAt?.toMillis ? data.createdAt.toMillis() : Date.now();
       const wasInvited  = !!data.referredBy;
+      // Authoritative expiry written by backend trialTriggers.ts (null until the
+      // trigger/backfill has run for this member → getTrialState falls back).
+      const trialEndsAtMs = data.trialEndsAt?.toMillis ? data.trialEndsAt.toMillis() : null;
 
       let invitedCount = 0;
       try {
@@ -6278,7 +6292,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
         invitedCount = invSnap.size;
       } catch (e) { console.warn('[trial] count invitees failed:', e); }
 
-      return { createdAtMs, wasInvited, invitedCount };
+      return { createdAtMs, wasInvited, invitedCount, trialEndsAtMs };
     } catch (e) {
       console.warn('[trial] loadOrCreateMember failed:', e);
       return null;
@@ -6298,10 +6312,23 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     }
   };
 
-  // Expose to main script (for refresh-after-share)
-  window._refreshTrialState = async function() {
+  // Expose to main script (for refresh-after-share). The backend (trialTriggers.ts)
+  // writes trialEndsAt asynchronously, so pass { poll: true } after an invite/bind
+  // action to re-read a few times until the new expiry converges (eventual
+  // consistency). No-arg call keeps the original single-read behaviour.
+  window._refreshTrialState = async function(opts) {
     if (!auth.currentUser) return;
-    const trial = await _loadOrCreateMember(auth.currentUser);
+    const poll = !!(opts && opts.poll);
+    const prevEnds = window._etfAuth?.trial?.trialEndsAtMs ?? null;
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const tries = poll ? 5 : 1;
+    let trial = null;
+    for (let i = 0; i < tries; i++) {
+      trial = await _loadOrCreateMember(auth.currentUser);
+      const ends = trial?.trialEndsAtMs ?? null;
+      if (!poll || (ends != null && ends !== prevEnds)) break;  // converged
+      if (i < tries - 1) await sleep(1500);
+    }
     if (trial && window._etfAuth) {
       window._etfAuth.trial = trial;
       if (typeof window.onAuthChanged === 'function') window.onAuthChanged();
