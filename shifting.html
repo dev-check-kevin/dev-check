@@ -6188,11 +6188,11 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     return result.data;
   };
 
-  const NOTES_COL      = collection(db, 'dev_notes');
-  const TOS_COL_ROOT   = 'dev_tos_acceptances';
-  const PORTFOLIO_COL  = collection(db, 'dev_portfolios');
-  const MEMBERS_COL    = 'dev_members';
-  const REFERRALS_COL  = 'dev_referrals';
+  const NOTES_COL      = collection(db, 'communityNotes');
+  const TOS_COL_ROOT   = 'userProfiles';
+  const PORTFOLIO_COL  = collection(db, 'userProfiles');
+  const MEMBERS_COL    = 'userProfiles';
+  const REFERRALS_COL  = 'userProfiles';
   const MAX_NOTES      = 15;
   const TOS_VERSION        = 'v1';
   const TOS_FORCE_REACCEPT = false;
@@ -6228,8 +6228,11 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     try {
       const memberRef = doc(db, MEMBERS_COL, uid);
       let snap = await getDoc(memberRef);
-      if (!snap.exists()) {
-        // New user: create member doc and record referral if present
+      // 判斷是否為新用戶：文件不存在，或文件存在但缺少 createdAt
+      // （後者發生在 watchlist 資料先存進 userProfiles，但尚未完成 login 流程的情況）
+      const isNewMember = !snap.exists() || !snap.data()?.createdAt;
+      if (isNewMember) {
+        // New user: create/merge profile fields and record referral if present
         let ref = null;
         try { ref = sessionStorage.getItem('etfcross_ref'); } catch (e) {}
         if (ref && (ref === uid || !/^[A-Za-z0-9_-]{8,40}$/.test(ref))) ref = null;
@@ -6238,10 +6241,10 @@ if (!document.documentElement.classList.contains('intro-seen')) {
           createdAt:  serverTimestamp(),
           referredBy: ref || null,
           updatedAt:  serverTimestamp(),
-        });
+        }, { merge: true });
         if (ref) {
           try {
-            await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
+            await setDoc(doc(db, REFERRALS_COL, ref, 'invitations', uid), {
               inviteeEmail: user.email || '',
               inviteeName:  user.displayName || '',
               acceptedAt:   serverTimestamp(),
@@ -6251,7 +6254,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
         try { sessionStorage.removeItem('etfcross_ref'); } catch (e) {}
         snap = await getDoc(memberRef);  // re-read for serverTimestamp value
       } else {
-        // Existing user: bind referral if not yet referred
+        // Existing member (createdAt confirmed present): bind referral if not yet referred
         const existingData = snap.data() || {};
         const pendingRef = (() => { try { return sessionStorage.getItem('etfcross_ref'); } catch(e) { return null; } })();
         console.log('[ref] existing user', uid, '| referredBy:', existingData.referredBy, '| sessionRef:', pendingRef);
@@ -6265,12 +6268,12 @@ if (!document.documentElement.classList.contains('intro-seen')) {
             try {
               await updateDoc(memberRef, { referredBy: ref, updatedAt: serverTimestamp() });
               console.log('[ref] member referredBy updated');
-              await setDoc(doc(db, REFERRALS_COL, ref, 'invitees', uid), {
+              await setDoc(doc(db, REFERRALS_COL, ref, 'invitations', uid), {
                 inviteeEmail: user.email || '',
                 inviteeName:  user.displayName || '',
                 acceptedAt:   serverTimestamp(),
               });
-              console.log('[ref] invitee record written to', REFERRALS_COL, ref, 'invitees', uid);
+              console.log('[ref] invitation written to', REFERRALS_COL, ref, 'invitations', uid);
             } catch (e) {
               console.error('[ref] late referral bind FAILED:', e.code, e.message, e);
             }
@@ -6292,7 +6295,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
 
       let invitedCount = 0;
       try {
-        const invSnap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitees'));
+        const invSnap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitations'));
         invitedCount = invSnap.size;
       } catch (e) { console.warn('[trial] count invitees failed:', e); }
 
@@ -6305,7 +6308,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   // Expose invitees list to main script
   window._fetchInvitees = async function(uid) {
     try {
-      const snap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitees'));
+      const snap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitations'));
       return snap.docs.map(d => ({
         name:  d.data().inviteeName  || '',
         email: d.data().inviteeEmail || '',
@@ -6392,7 +6395,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     try { localStorage.setItem('tos_accepted_version', TOS_VERSION); } catch(e) {}
     try {
       const tosContent = (document.getElementById('tosBody')?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 5000);
-      await addDoc(collection(db, TOS_COL_ROOT, user.uid, 'records'), {
+      await addDoc(collection(db, TOS_COL_ROOT, user.uid, 'tosRecords'), {
         uid:        user.uid,
         email:      user.email || '',
         version:    TOS_VERSION,
@@ -6400,7 +6403,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
         userAgent:  navigator.userAgent.slice(0, 200),
         tosContent,
       });
-    } catch(e) { console.warn('tos_acceptances write failed:', e); }
+    } catch(e) { console.warn('tosRecords write failed:', e); }
   }
 
   // ── Combined Modal ────────────────────────────────────────────────────────
@@ -6659,7 +6662,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   // ── Load portfolio from Firestore for logged-in users ─────────────────────
   async function loadUserPortfolio(uid) {
     try {
-      const docRef = doc(db, 'dev_portfolios', uid);
+      const docRef = doc(db, 'userProfiles', uid);
       const snap = await getDoc(docRef);
 
       if (snap.exists()) {
@@ -6705,7 +6708,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   // ── Save portfolio to Firestore ──────────────────────────────────────────
   async function savePortfolioToFirestore(uid, email) {
     try {
-      const docRef = doc(db, 'dev_portfolios', uid);
+      const docRef = doc(db, 'userProfiles', uid);
       await setDoc(docRef, {
         stocks: [...myPortfolio],
         email: email || '',
@@ -6720,7 +6723,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
 
   async function saveCardsToFirestore(uid, email, cards) {
     try {
-      const docRef = doc(db, 'dev_portfolios', uid);
+      const docRef = doc(db, 'userProfiles', uid);
       const cardsData = cards.map(c => ({ name: c.name, stocks: [...c.stocks] }));
       const stocksUnion = [...new Set(cards.flatMap(c => [...c.stocks]))];
       await setDoc(docRef, {
@@ -6824,7 +6827,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
       if (!token) { alert('無法取得推播 token，請稍後再試'); return; }
       const uid = window._etfAuth.user.uid;
-      await setDoc(doc(db, 'dev_fcmTokens', uid, 'devices', token), {
+      await setDoc(doc(db, 'userProfiles', uid, 'devices', token), {
         token,
         userId:    uid,
         email:     window._etfAuth.user.email || '',
@@ -6846,7 +6849,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     const token = localStorage.getItem(LS_TOKEN);
     const uid   = window._etfAuth?.user?.uid || localStorage.getItem(LS_UID);
     if (token && uid) {
-      try { await updateDoc(doc(db, 'dev_fcmTokens', uid, 'devices', token), { active: false }); } catch (e) { console.warn('FCM unsubscribe failed', e); }
+      try { await updateDoc(doc(db, 'userProfiles', uid, 'devices', token), { active: false }); } catch (e) { console.warn('FCM unsubscribe failed', e); }
     }
     localStorage.removeItem(LS_SUBSCRIBED);
     localStorage.removeItem(LS_TOKEN);
