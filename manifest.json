@@ -1,0 +1,17 @@
+{
+  "name": "ETF Cross",
+  "short_name": "ETF Cross",
+  "description": "台灣 ETF 交叉持股 / 主動式 ETF 異動分析",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0d12",
+  "theme_color": "#0a0d12",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
