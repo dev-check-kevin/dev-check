@@ -2509,6 +2509,14 @@
     text-align: center; font-size: 13px;
     color: var(--text2); margin-bottom: 12px;
   }
+  .share-timeline {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    margin: 0 0 14px;
+    font-size: 11px; line-height: 1.5;
+    color: var(--text3);
+  }
+  .share-timeline-item { white-space: nowrap; }
   .share-link-row {
     display: flex; gap: 8px;
     margin: 12px 0;
@@ -5014,7 +5022,8 @@ const TRIAL_REFERRAL_BONUS = 3;
 const TRIAL_REFERRAL_MAX   = 3;
 const TRIAL_MAX_DAYS       = 17;
 
-// Returns: { state, totalDays?, remainingDays?, wasInvited?, invitedCount? }
+// Returns: { state, totalDays?, remainingDays?, wasInvited?, invitedCount?,
+//            createdAtMs?, invitedAnchorMs?, referralAnchorsMs? }
 // state ∈ 'visitor' | 'member_loading' | 'trial' | 'expired' | 'paid'
 function getTrialState() {
   const a = window._etfAuth;
@@ -5044,6 +5053,7 @@ function getTrialState() {
   return {
     state: remainingDays > 0 ? 'trial' : 'expired',
     totalDays, remainingDays, wasInvited, invitedCount,
+    createdAtMs: t.createdAtMs, invitedAnchorMs: t.invitedAnchorMs, referralAnchorsMs: t.referralAnchorsMs,
   };
 }
 
@@ -5114,42 +5124,67 @@ async function showShareModal() {
   const gotCodeCount    = wasInvited ? 1 : 0;
   const totalDays       = s.totalDays || TRIAL_BASE_DAYS;
   const extensionDays   = (wasInvited ? TRIAL_INVITED_BONUS : 0) + Math.min(invitedCount, TRIAL_REFERRAL_MAX) * TRIAL_REFERRAL_BONUS;
-  const remCount        = Math.max(0, TRIAL_REFERRAL_MAX - invitedCount);
   const remainingTxt  = s.state === 'trial'
     ? `試用期還剩 <b style="color:#3fb950">${s.remainingDays} 天</b>（共 ${totalDays} 天）`
     : (s.state === 'expired' ? '<b style="color:var(--text2)">你的試用期已結束</b>，可重新累積邀請延長' : '');
-  const inviterRow = wasInvited
-    ? `<div class="share-relation-row inviter"><span class="share-relation-text">邀請碼來源：已透過邀請碼登入 (+${TRIAL_INVITED_BONUS} 天)</span></div>`
-    : `<div class="share-relation-row none"><span class="share-relation-text">尚未獲取邀請碼</span></div>`;
+  // 累積時間軸：把每筆天數獎勵依「取得時刻」排序後滑動推進，鏡射後端
+  // computeTrialEndsMs 的 expiry = max(expiry, anchor) + days。anchor 落在
+  // 目前遊標之後 → 該筆讓試用「重新打開」，顯示起訖；否則無縫銜接，只顯示訖。
+  // 「訖」顯示 cursor 往前推一整天的日期（即第 N 天當作最後一個有效完整日，
+  // 例如登入日 06/07 + 5 天 → 訖 06/11），呼應「還剩 N 天」用 ceil 算到的最後一天，
+  // 不能只減 1ms（那只在剛好對齊午夜時才會跨到前一個日曆日）。
+  const fmtDate = ms => new Date(ms).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  let timelineHtml = '';
+  if (s.createdAtMs) {
+    const events = [{ label: '登入日', anchorMs: s.createdAtMs, days: TRIAL_BASE_DAYS }];
+    if (wasInvited && typeof s.invitedAnchorMs === 'number') {
+      events.push({ label: '受邀 +3', anchorMs: s.invitedAnchorMs, days: TRIAL_INVITED_BONUS });
+    }
+    (s.referralAnchorsMs || [])
+      .filter(ms => typeof ms === 'number' && isFinite(ms))
+      .sort((x, y) => x - y)
+      .slice(0, TRIAL_REFERRAL_MAX)
+      .forEach(ms => events.push({ label: '邀請 +3', anchorMs: ms, days: TRIAL_REFERRAL_BONUS }));
+    events.sort((x, y) => x.anchorMs - y.anchorMs);
+    let cursor = 0;
+    timelineHtml = events.map((e, i) => {
+      const isGap   = e.anchorMs > cursor;
+      const startMs = Math.max(cursor, e.anchorMs);
+      cursor = startMs + e.days * 86400000;
+      const lastDayMs = cursor - 86400000;
+      return isGap
+        ? `<div class="share-timeline-item">T${i + 1}，${e.label}：${fmtDate(startMs)}，訖：${fmtDate(lastDayMs)}</div>`
+        : `<div class="share-timeline-item">T${i + 1}，${e.label}：訖：${fmtDate(lastDayMs)}</div>`;
+    }).join('');
+  }
+  const statCols  = wasInvited ? 3 : 2;
+  const statsHtml = `
+      <div class="share-stat"><div class="share-stat-num">${invitedCount}</div><div class="share-stat-label">已邀人數</div></div>
+      ${wasInvited ? `<div class="share-stat"><div class="share-stat-num">${gotCodeCount}</div><div class="share-stat-label">獲取邀請碼</div></div>` : ''}
+      <div class="share-stat"><div class="share-stat-num">${extensionDays}</div><div class="share-stat-label">共延長 (天)</div></div>`;
   document.getElementById('shareModalBody').innerHTML = `
     <div class="share-headline">
       <div class="share-icon">🎁</div>
-      <div class="share-title">邀請好友，雙方各 +${TRIAL_REFERRAL_BONUS} 天試用</div>
-      <div class="share-sub">朋友透過你的連結登入後，雙方都會獲得 ${TRIAL_REFERRAL_BONUS} 天試用延長。</div>
-      <div class="share-sub">試用期間享全功能。</div>
+      <div class="share-title">分享網站，雙方各 +${TRIAL_REFERRAL_BONUS} 天試用</div>
+      <div class="share-sub">透過你的連結登入後，雙方獲得 ${TRIAL_REFERRAL_BONUS} 天延長，期間開通全功能。</div>
     </div>
-    <div class="share-stats">
-      <div class="share-stat"><div class="share-stat-num">${gotCodeCount}</div><div class="share-stat-label">獲取邀請碼</div></div>
-      <div class="share-stat"><div class="share-stat-num">${invitedCount}</div><div class="share-stat-label">已邀人數</div></div>
-      <div class="share-stat"><div class="share-stat-num">${extensionDays}</div><div class="share-stat-label">共延長 (天)</div></div>
-    </div>
-    ${remainingTxt ? `<div class="share-remaining">${remainingTxt}</div>` : ''}
     <div class="share-link-row">
       <input id="shareLinkInput" class="share-link-input" readonly value="${link}">
       <button class="share-copy-btn" onclick="copyShareLink()">複製</button>
     </div>
-    <div class="share-divider"></div>
-    <div class="share-relations">
-      ${inviterRow}
+    <div class="share-stats" style="grid-template-columns: repeat(${statCols}, 1fr)">
+      ${statsHtml}
     </div>
+    ${remainingTxt ? `<div class="share-remaining">${remainingTxt}</div>` : ''}
+    ${timelineHtml ? `<div class="share-timeline">${timelineHtml}</div>` : ''}
     <div class="share-divider"></div>
     <div id="shareInviteesList" class="share-relations">
       <div class="share-invitees-loading">載入中…</div>
     </div>
     <div class="share-rules">
-      · 每邀 1 人 +${TRIAL_REFERRAL_BONUS} 天，最多計 ${TRIAL_REFERRAL_MAX} 人<br>
-      · 被邀請者進場時也送 ${TRIAL_BASE_DAYS + TRIAL_INVITED_BONUS} 天（基礎 ${TRIAL_BASE_DAYS} + 被邀 ${TRIAL_INVITED_BONUS}）<br>
-      · 還可再邀 <b>${remCount}</b> 人
+      · 基礎試用期為 ${TRIAL_BASE_DAYS} 天<br>
+      · 分享網站連結給好麻吉，雙方皆可延長 +${TRIAL_REFERRAL_BONUS} 天<br>
+      · 最多可以邀請 ${TRIAL_REFERRAL_MAX} 人，最多延長 ${TRIAL_REFERRAL_MAX * TRIAL_REFERRAL_BONUS} 天
     </div>
   `;
   modal.style.display = '';
@@ -6218,7 +6253,8 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   }
 
   // Helper: load or create members/{uid} + count invitees → returns trial state
-  // Returns { createdAtMs, wasInvited, invitedCount } or null on failure
+  // Returns { createdAtMs, wasInvited, invitedCount, trialEndsAtMs,
+  //           invitedAnchorMs, referralAnchorsMs } or null on failure
   async function _loadOrCreateMember(user) {
     const uid = user.uid;
     try {
@@ -6288,14 +6324,24 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       // Authoritative expiry written by backend trialTriggers.ts (null until the
       // trigger/backfill has run for this member → getTrialState falls back).
       const trialEndsAtMs = data.trialEndsAt?.toMillis ? data.trialEndsAt.toMillis() : null;
+      // Anchor for the invited (+3) bonus = the moment referredBy was bound
+      // (mirrors backend trialMath.ts TrialAnchors.invitedAnchorMs); fall back
+      // to createdAtMs for members written before referredBindAt existed.
+      const invitedAnchorMs = data.referredBindAt?.toMillis
+        ? data.referredBindAt.toMillis()
+        : (wasInvited ? createdAtMs : null);
 
       let invitedCount = 0;
+      let referralAnchorsMs = [];
       try {
         const invSnap = await getDocs(collection(db, REFERRALS_COL, uid, 'invitations'));
         invitedCount = invSnap.size;
+        referralAnchorsMs = invSnap.docs
+          .map(d => d.data().acceptedAt?.toMillis ? d.data().acceptedAt.toMillis() : null)
+          .filter(ms => ms != null);
       } catch (e) { console.warn('[trial] count invitees failed:', e); }
 
-      return { createdAtMs, wasInvited, invitedCount, trialEndsAtMs };
+      return { createdAtMs, wasInvited, invitedCount, trialEndsAtMs, invitedAnchorMs, referralAnchorsMs };
     } catch (e) {
       console.warn('[trial] loadOrCreateMember failed:', e);
       return null;
