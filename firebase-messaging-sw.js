@@ -4,7 +4,7 @@ importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-com
 
 const firebaseConfig = {
   apiKey: "AIzaSyA9CJ2FF3DUhmaZxRmKrptU10CSyi9mOfQ",
-  authDomain: "etf-analysis-master.firebaseapp.com",
+  authDomain: "etfcross.com",
   projectId: "etf-analysis-master",
   storageBucket: "etf-analysis-master.firebasestorage.app",
   messagingSenderId: "447309961676",
