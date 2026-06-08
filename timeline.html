@@ -3150,12 +3150,18 @@
     --ch-orange: #ff8a4c;
     --ch-serif: 'Noto Serif TC', serif;
     --ch-kai: 'Ma Shan Zheng', cursive;
-    /* 兩圖層架構：覆蓋層固定在視窗上方，下方交集表維持原位、不被推擠捲動，
-       封面只隨使用者捲動內容的進度原地淡出、不跟著滑動 */
+    /* 點擊退場：封面是蓋住整個視窗的固定覆蓋層，完全擋住下方交集表；
+       刻意不鎖定／不切換頁面 overflow——捲軸從頭到尾都在原本的狀態，
+       不會因為開關 overflow:hidden 而出現/消失，也就不會有版面跟著跳動的問題。
+       點擊封面任一處（CTA 連結除外）即加上 .is-dismissing 觸發 opacity 淡出，
+       transitionend 時把捲動位置歸零，交集表才乾淨呈現在頁首 */
     position: fixed; inset: 0; z-index: 200; min-height: 640px; overflow: hidden;
     background: radial-gradient(ellipse 120% 80% at 50% -10%, #11161f 0%, var(--ch-bg0) 60%);
+    cursor: pointer;
+    transition: opacity .6s ease;
     will-change: opacity;
   }
+  .cover-hero.is-dismissing { opacity: 0; pointer-events: none; }
   /* 同站切頁時與 brain 一起跳過（pre-paint 由 head script 加上 .intro-seen） */
   html.intro-seen .cover-hero { display: none !important; }
 
@@ -3423,7 +3429,7 @@
         <a class="ch-link" href="shifting" data-ch-tour-next="shifting"><span class="n">03</span>產業權重輪動<span class="ar">→</span></a>
       </div>
     </div>
-    <div class="ch-scroll-hint"><span class="bar"></span>scroll</div>
+    <div class="ch-scroll-hint"><span class="bar"></span>click to enter</div>
   </div>
 </section>
 
@@ -6253,29 +6259,45 @@ function wait(ms) {
 // Skip button
 document.getElementById('intro-skip')?.addEventListener('click', finishIntro);
 
-// ── Cover hero：兩圖層架構，覆蓋層原地隨捲動進度淡出（不跟著內容滑動，下方交集表維持原位）──
+// ── Cover hero：點擊退場 — 封面是蓋住整個視窗的固定覆蓋層，頁面捲動維持原生行為
+//    （不鎖定、不切換 overflow，捲軸從頭到尾都在，不會有出現/消失造成的版面跳動）；
+//    點擊封面任一處（CTA 連結除外）即加上 .is-dismissing，交由 CSS transition 淡出，
+//    transitionend 時把捲動位置歸零、觸發既有 _coverDismissed 通知機制 ──
 (function() {
   var cover = document.querySelector('.cover-hero');
-  if (!cover) return;
-  function onScroll() {
-    var progress = Math.min(1, Math.max(0, window.scrollY / window.innerHeight));
-    cover.style.opacity = String(1 - progress);
-    cover.style.pointerEvents = (progress >= 1) ? 'none' : '';
-    if (progress >= 1 && !window._coverDismissed) {
-      window._coverDismissed = true;
-      (window._coverDismissedCallbacks || []).forEach(function(fn) { fn(); });
-      window._coverDismissedCallbacks = [];
-    }
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
-})();
+  var html = document.documentElement;
+  if (!cover || html.classList.contains('intro-seen')) return;
 
-// 「01 ETF 交集表」同頁平滑捲動到交集表本體
-document.querySelector('.cover-hero [data-ch-jump]')?.addEventListener('click', function(e) {
-  e.preventDefault();
-  document.querySelector('.tab-nav')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+  var dismissed = false;
+
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    cover.classList.add('is-dismissing');
+    cover.addEventListener('transitionend', function onEnd(e) {
+      if (e.propertyName !== 'opacity') return;
+      cover.removeEventListener('transitionend', onEnd);
+      window.scrollTo(0, 0); // 封面顯示期間頁面仍可被捲動（僅是看不見），退場後歸零讓交集表乾淨呈現於頁首
+      if (!window._coverDismissed) {
+        window._coverDismissed = true;
+        (window._coverDismissedCallbacks || []).forEach(function(fn) { fn(); });
+        window._coverDismissedCallbacks = [];
+      }
+    });
+  }
+
+  // 點擊封面任一處淡出退場；CTA 連結（01/02/03）維持各自既有導向行為，不觸發此處
+  cover.addEventListener('click', function(e) {
+    if (e.target.closest('[data-ch-jump], [data-ch-tour-next]')) return;
+    dismiss();
+  });
+
+  // 「01 ETF 交集表」：退場後交集表本體本就在頁首，點擊直接觸發淡出退場即可，無需另外導頁
+  cover.querySelector('[data-ch-jump]')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    dismiss();
+  });
+})();
 
 // 「02 / 03」沿用既有 etfcross_tour_next 機制：首訪導覽會在目的頁從對應步驟接續，不被拉回首頁重來
 document.querySelectorAll('.cover-hero [data-ch-tour-next]').forEach(function(a) {
