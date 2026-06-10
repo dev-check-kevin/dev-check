@@ -1813,6 +1813,29 @@
     color: var(--accent);
     background: color-mix(in srgb, var(--accent) 10%, var(--bg2));
   }
+  .notify-guide-btn {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .notify-guide-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg2));
+  }
 
   /* 日期 button row (shifting 頁同時控制共識區 + ETF 異動歷史) */
   .weight-date-row {
@@ -3583,6 +3606,7 @@
     <button class="weight-scroll-btn weight-scroll-left" onclick="scrollWeightDateRow('left')" title="向左滾動">‹</button>
     <button class="weight-scroll-btn weight-scroll-right" onclick="scrollWeightDateRow('right')" title="向右滾動">›</button>
     <button id="notifyPushBtn" class="notify-push-btn" title="訂閱 ETF 共識推播通知">開啟共識通知</button>
+    <a class="notify-guide-btn" href="https://www.patreon.com/etfcross/posts/kai-qi-etf-cross-160740191" target="_blank" rel="noopener" title="手機推播通知設定教學">📱 手機通知教學</a>
     <div class="sf-search">
       <input type="text" id="sfSearchInput" placeholder="搜尋股票代號 / 名稱" autocomplete="off" spellcheck="false" />
       <button id="sfSearchPrev" class="hw-search-arrow" type="button" aria-label="上一筆" disabled>‹</button>
@@ -7004,7 +7028,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
 
   function updateBtn(subscribed) {
     btn.innerHTML = subscribed
-      ? '<span style="color:#facc15;font-size:14px">🔔</span> 當日共識通知已開啟'
+      ? '<span style="color:#facc15;font-size:14px">🔔</span> 共識通知已開啟 (手機、Mail、網頁)'
       : '<span style="font-size:14px">🔔</span> 開啟當日共識通知';
     btn.classList.toggle('subscribed', subscribed);
     btn.title = subscribed ? '點擊取消共識推播通知' : '訂閱 ETF 共識推播通知';
