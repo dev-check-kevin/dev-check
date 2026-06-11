@@ -4567,13 +4567,11 @@ function setupWallSearch() {
     clearFlash();
   };
 
-  const AUTO_SEARCH_RE = /\d{4}/;
   input.addEventListener('input', () => {
     clearTimeout(debounceT);
     const val = input.value;
     debounceT = setTimeout(() => {
       if (!val.trim()) { clearAll(); return; }
-      if (!AUTO_SEARCH_RE.test(val)) { clearAll(); return; }
       refresh(true);
     }, 90);
   });
@@ -7445,8 +7443,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     sfInput.addEventListener('input', function() {
       clearTimeout(sfTimer);
       var q = sfInput.value;
-      if (/\d{4}/.test(q)) { sfDoSearch(q); }
-      else { sfTimer = setTimeout(function() { sfDoSearch(q); }, 300); }
+      sfTimer = setTimeout(function() { sfDoSearch(q); }, 90);
     });
     sfInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { sfDoSearch(sfInput.value); }

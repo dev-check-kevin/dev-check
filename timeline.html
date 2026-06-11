@@ -4567,13 +4567,11 @@ function setupWallSearch() {
     clearFlash();
   };
 
-  const AUTO_SEARCH_RE = /\d{4}/;
   input.addEventListener('input', () => {
     clearTimeout(debounceT);
     const val = input.value;
     debounceT = setTimeout(() => {
       if (!val.trim()) { clearAll(); return; }
-      if (!AUTO_SEARCH_RE.test(val)) { clearAll(); return; }
       refresh(true);
     }, 90);
   });
