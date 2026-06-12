@@ -7136,6 +7136,33 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   var frameEl, tooltip, cutoutT, cutoutB, cutoutL, cutoutR, updateFn, mainCard;
   var TOTAL = 9;
 
+  // TEMP DEBUG (20260612-8): 量測 wall 卡片進場動畫狀態 vs. tour 定位時序，定位完根因後移除
+  function _tourDebug(label, el) {
+    try {
+      var now = performance.now();
+      var hWall = document.querySelector('.history-wall-h');
+      var group = el && el.closest ? el.closest('.wall-group') : null;
+      var anims = [];
+      if (el && el.getAnimations) anims = anims.concat(el.getAnimations());
+      if (group && group.getAnimations) anims = anims.concat(group.getAnimations());
+      var animInfo = anims.map(function(a) {
+        var t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
+        return { name: a.animationName, playState: a.playState, currentTime: a.currentTime, delay: t.delay, duration: t.duration };
+      });
+      var cr = el ? el.getBoundingClientRect() : null;
+      console.log('[tour-debug]', label, {
+        t: Math.round(now),
+        cr: cr ? { top: Math.round(cr.top), left: Math.round(cr.left), right: Math.round(cr.right), bottom: Math.round(cr.bottom) } : null,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        hWallScrollLeft: hWall ? hWall.scrollLeft : null,
+        groupAnimationDelay: group ? getComputedStyle(group).animationDelay : null,
+        cardAnimationDelay: el ? getComputedStyle(el).animationDelay : null,
+        anims: animInfo
+      });
+    } catch (e) { console.log('[tour-debug] error', label, e); }
+  }
+
   function ensureCutouts() {
     if (cutoutT) return;
     function mk(id) {
@@ -7307,6 +7334,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     var target = findMainCard();
     if (!target) { setTimeout(showStep4, 400); return; }
     mainCard = target;
+    _tourDebug('showStep4:found', mainCard);
     collapseStrip();
     var hWall = document.querySelector('.history-wall-h');
     if (hWall) {
@@ -7320,6 +7348,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
         var r = mainCard.getBoundingClientRect();
         return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
       };
+      _tourDebug('showStep4:beforeShow', mainCard);
       showStep(getCr, '當日從無到有、新增入列的成份股', '顯示購入張數、以當日最低價格估算成本，並與最新一天的收盤價格做對照，<span style="white-space:nowrap">藍色的<span class="wall-followup-badge" style="font-size:11px">+N</span></span> 為後續加碼次數，點擊展開。', 4, 'bottom', showStep5, backToIndexStep3);
     }, 400);
   }
@@ -7331,6 +7360,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       var strip = getStripForCard();
       if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(function() {
+        _tourDebug('showStep5:beforeShow', mainCard);
         showStep(getMainPlusStripRect, '主卡 ＋ 延伸卡', '點開主卡後，同樣可以看到後續加碼資訊。並在最後顯示<span style="color:var(--accent);font-weight:700">平均購入最低成本</span>（皆以當日最低收盤價做估算）。', 5, 'bottom', showStep6, function() { collapseStrip(); showStep4(); });
       }, 400);
     }, 200);
