@@ -3345,9 +3345,12 @@
 
 </style>
 <script>
-  // 開場動畫 gate：若從同站連結進來就跳過動畫（pre-paint 階段執行）
+  // 開場動畫 gate：同站切頁，或本機已記錄看過完整導覽 → 跳過（pre-paint 階段執行）
   try {
-    if (document.referrer && document.referrer.indexOf(location.origin) === 0) {
+    if (
+      (document.referrer && document.referrer.indexOf(location.origin) === 0) ||
+      localStorage.getItem('etfcross_intro_seen') === '1'
+    ) {
       document.documentElement.classList.add('intro-seen');
     }
   } catch (e) {}
@@ -7179,6 +7182,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
         return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) };
       },
       nextFn: function() {
+        try { localStorage.setItem('etfcross_intro_seen', '1'); } catch (e) {}
         sessionStorage.setItem('etfcross_tour_next', 'timeline');
         var link = document.querySelector('a.tab-btn[href="timeline"]');
         if (link) { link.click(); } else { window.location.href = 'timeline.html'; }
@@ -7357,6 +7361,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     }, step.delay != null ? step.delay : 420);
   }
   function dismiss() {
+    try { localStorage.setItem('etfcross_intro_seen', '1'); } catch (e) {}
     clearHL();
     if (overlay) overlay.style.display = 'none';
     if (tooltip) tooltip.style.display = 'none';

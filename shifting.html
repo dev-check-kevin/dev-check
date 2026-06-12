@@ -3345,9 +3345,12 @@
 
 </style>
 <script>
-  // 開場動畫 gate：若從同站連結進來就跳過動畫（pre-paint 階段執行）
+  // 開場動畫 gate：同站切頁，或本機已記錄看過完整導覽 → 跳過（pre-paint 階段執行）
   try {
-    if (document.referrer && document.referrer.indexOf(location.origin) === 0) {
+    if (
+      (document.referrer && document.referrer.indexOf(location.origin) === 0) ||
+      localStorage.getItem('etfcross_intro_seen') === '1'
+    ) {
       document.documentElement.classList.add('intro-seen');
     }
   } catch (e) {}
