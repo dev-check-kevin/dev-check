@@ -2704,7 +2704,7 @@
     border: 1px solid var(--border); object-fit: cover; flex-shrink: 0;
   }
   .note-avatar-fallback {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+    width: 28px; height: 28px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
   }
@@ -6811,13 +6811,22 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     return d.toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
   }
 
+  const AVATAR_COLORS = ['#305b8c', '#23662c', '#745413', '#674d8c', '#884266', '#1f6c72', '#7b3a23'];
+  function avatarColorFor(seed) {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = (h * 31 + seed.charCodeAt(i)) | 0;
+    }
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  }
+
   function renderNoteCard(docSnap) {
     const d = docSnap.data();
     const isOwn = currentUser && currentUser.uid === d.uid;
     const initial = (d.displayName || d.email || '?')[0].toUpperCase();
     const avatar = d.photoURL
       ? `<img class="note-avatar" src="${d.photoURL}" referrerpolicy="no-referrer">`
-      : `<div class="note-avatar-fallback">${initial}</div>`;
+      : `<div class="note-avatar-fallback" style="background:${avatarColorFor(d.uid || d.displayName || d.email || '?')}">${initial}</div>`;
     const founderBadge = d.patreonTier === 'founder'
       ? '<span class="founder-badge--note" title="創始會員"><svg width="8" height="8" viewBox="0 0 11 11" fill="none"><path d="M5.5 0.5L6.5 3.8L9.8 4.8L6.5 5.8L5.5 9.1L4.5 5.8L1.2 4.8L4.5 3.8L5.5 0.5Z" fill="#f0d685"/></svg>Founder</span>'
       : '';
@@ -7205,6 +7214,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     }
   }
   function dismissAll() {
+    rectWaitGen++;
     if (frameEl) frameEl.style.display = 'none';
     if (tooltip) tooltip.style.display = 'none';
     hideCutout();
@@ -7261,6 +7271,25 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     return target;
   }
 
+  /* 載入慢時固定 timeout 會量到 smooth-scroll／版面 settle 前的中間態座標，
+     highlight 就停在錯位的位置（之後只有 scroll/resize 會重新定位）。
+     改成輪詢 rect：連續 10 個 frame 座標不變才視為穩定；5 秒上限避免 tour 卡住不出現。
+     後發起的等待會取消先前未完成的（防止上一步/下一步快速切換時兩個輪詢互搶）。 */
+  var rectWaitGen = 0;
+  function waitForStableRect(getCr, onReady) {
+    var gen = ++rectWaitGen;
+    var last = null, stable = 0, started = performance.now();
+    function tick() {
+      if (gen !== rectWaitGen) return;
+      var cr = getCr();
+      var key = cr ? [cr.top, cr.left, cr.right, cr.bottom].join(',') : null;
+      if (key !== null && key === last) { stable++; } else { stable = 0; last = key; }
+      if ((stable >= 10 && cr) || performance.now() - started > 5000) { onReady(); return; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
   function getStripForCard() {
     if (!mainCard) return null;
     var wrap = mainCard.parentElement;
@@ -7314,14 +7343,14 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       if (group) hWall.scrollTo({ left: group.offsetLeft - 32, behavior: 'smooth' });
     }
     mainCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(function() {
-      var getCr = function() {
-        if (!mainCard) return null;
-        var r = mainCard.getBoundingClientRect();
-        return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
-      };
+    var getCr = function() {
+      if (!mainCard) return null;
+      var r = mainCard.getBoundingClientRect();
+      return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
+    };
+    waitForStableRect(getCr, function() {
       showStep(getCr, '當日從無到有、新增入列的成份股', '顯示購入張數、以當日最低價格估算成本，並與最新一天的收盤價格做對照，<span style="white-space:nowrap">藍色的<span class="wall-followup-badge" style="font-size:11px">+N</span></span> 為後續加碼次數，點擊展開。', 4, 'bottom', showStep5, backToIndexStep3);
-    }, 400);
+    });
   }
 
   function showStep5() {
@@ -7330,9 +7359,9 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     setTimeout(function() {
       var strip = getStripForCard();
       if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(function() {
+      waitForStableRect(getMainPlusStripRect, function() {
         showStep(getMainPlusStripRect, '主卡 ＋ 延伸卡', '點開主卡後，同樣可以看到後續加碼資訊。並在最後顯示<span style="color:var(--accent);font-weight:700">平均購入最低成本</span>（皆以當日最低收盤價做估算）。', 5, 'bottom', showStep6, function() { collapseStrip(); showStep4(); });
-      }, 400);
+      });
     }, 200);
   }
 
@@ -7341,15 +7370,15 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     if (!link) { dismissAll(); return; }
     dismissAll();
     link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(function() {
-      var getCr = function() {
-        var l = document.querySelector('a.tab-btn[href="shifting"]');
-        if (!l) return null;
-        var r = l.getBoundingClientRect();
-        return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
-      };
+    var getCr = function() {
+      var l = document.querySelector('a.tab-btn[href="shifting"]');
+      if (!l) return null;
+      var r = l.getBoundingClientRect();
+      return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
+    };
+    waitForStableRect(getCr, function() {
       showStep(getCr, '產業權重輪動', '追蹤主動式 ETF 每日加碼動作背後的產業變化，觀察哪些族群正在被買進、哪些正在被賣出。', 6, 'bottom', goToShifting, function() { showStep5(); }, '進入頁面 →');
-    }, 300);
+    });
   }
 
   function goToShifting() {
