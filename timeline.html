@@ -2434,6 +2434,12 @@
     white-space: nowrap; user-select: none; vertical-align: middle;
   }
   .founder-badge--note svg { flex-shrink: 0; }
+  .mod-replied-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--text3); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.3px; line-height: 1; opacity: 0.65;
+    white-space: nowrap; user-select: none; flex-shrink: 0;
+  }
   @keyframes pro-glow {
     0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0);       border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
     50%       { box-shadow: 0 0 7px 3px rgba(212,175,55,0.55); border-color: #d4af37; }
@@ -6830,6 +6836,9 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     const founderBadge = d.patreonTier === 'founder'
       ? '<span class="founder-badge--note" title="創始會員"><svg width="8" height="8" viewBox="0 0 11 11" fill="none"><path d="M5.5 0.5L6.5 3.8L9.8 4.8L6.5 5.8L5.5 9.1L4.5 5.8L1.2 4.8L4.5 3.8L5.5 0.5Z" fill="#f0d685"/></svg>Founder</span>'
       : '';
+    const repliedBadge = d.alreadyReply === true
+      ? '<span class="mod-replied-badge">✓ 已透過信件回覆</span>'
+      : '';
     return `
       <div class="note-card ${isOwn ? 'own' : ''}">
         <div class="note-header">
@@ -6838,6 +6847,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
             <div class="note-author">${d.displayName || d.email}${founderBadge}</div>
             <div class="note-time">${fmtTime(d.createdAt)}</div>
           </div>
+          ${repliedBadge}
         </div>
         <div class="note-content">${d.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
       </div>`;
