@@ -7136,33 +7136,6 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   var frameEl, tooltip, cutoutT, cutoutB, cutoutL, cutoutR, updateFn, mainCard;
   var TOTAL = 9;
 
-  // TEMP DEBUG (20260612-8): 量測 wall 卡片進場動畫狀態 vs. tour 定位時序，定位完根因後移除
-  function _tourDebug(label, el) {
-    try {
-      var now = performance.now();
-      var hWall = document.querySelector('.history-wall-h');
-      var group = el && el.closest ? el.closest('.wall-group') : null;
-      var anims = [];
-      if (el && el.getAnimations) anims = anims.concat(el.getAnimations());
-      if (group && group.getAnimations) anims = anims.concat(group.getAnimations());
-      var animInfo = anims.map(function(a) {
-        var t = a.effect && a.effect.getTiming ? a.effect.getTiming() : {};
-        return { name: a.animationName, playState: a.playState, currentTime: a.currentTime, delay: t.delay, duration: t.duration };
-      });
-      var cr = el ? el.getBoundingClientRect() : null;
-      console.log('[tour-debug]', label, {
-        t: Math.round(now),
-        cr: cr ? { top: Math.round(cr.top), left: Math.round(cr.left), right: Math.round(cr.right), bottom: Math.round(cr.bottom) } : null,
-        innerWidth: window.innerWidth,
-        innerHeight: window.innerHeight,
-        hWallScrollLeft: hWall ? hWall.scrollLeft : null,
-        groupAnimationDelay: group ? getComputedStyle(group).animationDelay : null,
-        cardAnimationDelay: el ? getComputedStyle(el).animationDelay : null,
-        anims: animInfo
-      });
-    } catch (e) { console.log('[tour-debug] error', label, e); }
-  }
-
   function ensureCutouts() {
     if (cutoutT) return;
     function mk(id) {
@@ -7232,6 +7205,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     }
   }
   function dismissAll() {
+    rectWaitGen++;
     if (frameEl) frameEl.style.display = 'none';
     if (tooltip) tooltip.style.display = 'none';
     hideCutout();
@@ -7288,6 +7262,25 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     return target;
   }
 
+  /* 載入慢時固定 timeout 會量到 smooth-scroll／版面 settle 前的中間態座標，
+     highlight 就停在錯位的位置（之後只有 scroll/resize 會重新定位）。
+     改成輪詢 rect：連續 10 個 frame 座標不變才視為穩定；5 秒上限避免 tour 卡住不出現。
+     後發起的等待會取消先前未完成的（防止上一步/下一步快速切換時兩個輪詢互搶）。 */
+  var rectWaitGen = 0;
+  function waitForStableRect(getCr, onReady) {
+    var gen = ++rectWaitGen;
+    var last = null, stable = 0, started = performance.now();
+    function tick() {
+      if (gen !== rectWaitGen) return;
+      var cr = getCr();
+      var key = cr ? [cr.top, cr.left, cr.right, cr.bottom].join(',') : null;
+      if (key !== null && key === last) { stable++; } else { stable = 0; last = key; }
+      if ((stable >= 10 && cr) || performance.now() - started > 5000) { onReady(); return; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
   function getStripForCard() {
     if (!mainCard) return null;
     var wrap = mainCard.parentElement;
@@ -7334,7 +7327,6 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     var target = findMainCard();
     if (!target) { setTimeout(showStep4, 400); return; }
     mainCard = target;
-    _tourDebug('showStep4:found', mainCard);
     collapseStrip();
     var hWall = document.querySelector('.history-wall-h');
     if (hWall) {
@@ -7342,15 +7334,14 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       if (group) hWall.scrollTo({ left: group.offsetLeft - 32, behavior: 'smooth' });
     }
     mainCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(function() {
-      var getCr = function() {
-        if (!mainCard) return null;
-        var r = mainCard.getBoundingClientRect();
-        return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
-      };
-      _tourDebug('showStep4:beforeShow', mainCard);
+    var getCr = function() {
+      if (!mainCard) return null;
+      var r = mainCard.getBoundingClientRect();
+      return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
+    };
+    waitForStableRect(getCr, function() {
       showStep(getCr, '當日從無到有、新增入列的成份股', '顯示購入張數、以當日最低價格估算成本，並與最新一天的收盤價格做對照，<span style="white-space:nowrap">藍色的<span class="wall-followup-badge" style="font-size:11px">+N</span></span> 為後續加碼次數，點擊展開。', 4, 'bottom', showStep5, backToIndexStep3);
-    }, 400);
+    });
   }
 
   function showStep5() {
@@ -7359,10 +7350,9 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     setTimeout(function() {
       var strip = getStripForCard();
       if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(function() {
-        _tourDebug('showStep5:beforeShow', mainCard);
+      waitForStableRect(getMainPlusStripRect, function() {
         showStep(getMainPlusStripRect, '主卡 ＋ 延伸卡', '點開主卡後，同樣可以看到後續加碼資訊。並在最後顯示<span style="color:var(--accent);font-weight:700">平均購入最低成本</span>（皆以當日最低收盤價做估算）。', 5, 'bottom', showStep6, function() { collapseStrip(); showStep4(); });
-      }, 400);
+      });
     }, 200);
   }
 
@@ -7371,15 +7361,15 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     if (!link) { dismissAll(); return; }
     dismissAll();
     link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(function() {
-      var getCr = function() {
-        var l = document.querySelector('a.tab-btn[href="shifting"]');
-        if (!l) return null;
-        var r = l.getBoundingClientRect();
-        return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
-      };
+    var getCr = function() {
+      var l = document.querySelector('a.tab-btn[href="shifting"]');
+      if (!l) return null;
+      var r = l.getBoundingClientRect();
+      return { top: Math.round(r.top), left: Math.round(r.left), right: Math.round(r.right), bottom: Math.round(r.bottom) };
+    };
+    waitForStableRect(getCr, function() {
       showStep(getCr, '產業權重輪動', '追蹤主動式 ETF 每日加碼動作背後的產業變化，觀察哪些族群正在被買進、哪些正在被賣出。', 6, 'bottom', goToShifting, function() { showStep5(); }, '進入頁面 →');
-    }, 300);
+    });
   }
 
   function goToShifting() {
