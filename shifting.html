@@ -662,7 +662,7 @@
     position: fixed; inset: 0; z-index: 10001;
     display: flex; align-items: flex-start; justify-content: center;
     background: rgba(8, 10, 16, 0.86);
-    padding: 40px 20px;
+    padding: 40px 20px calc(40px + env(safe-area-inset-bottom));
     overflow-y: auto;
     animation: plBackdropIn 0.2s ease;
   }
@@ -774,6 +774,7 @@
     font-family: "Noto Sans TC", sans-serif; font-size: 11.5px; padding: 0;
   }
   @media (max-width: 600px) {
+    .pl-backdrop { padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); }
     .pl-card { padding: 36px 24px 32px; }
     .pl-greeting { font-size: 22px; }
     .pl-plan { grid-template-columns: 1fr auto; gap: 6px; }
