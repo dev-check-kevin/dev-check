@@ -1699,6 +1699,8 @@
   }
   .wall-etf-shares-big.is-large-num { font-size: 13px; }
   .wall-etf-shares-big.is-large-num .wall-etf-shares-unit { font-size: 10px; }
+  /* 主卡（非延伸卡/摘要卡）大張數數字再小一檔：11px，單位維持 10px */
+  .wall-stock-card:not(.wall-stock-card-followup) .wall-etf-shares-big.is-large-num { font-size: 11px; }
   .wall-etf-shares-unit {
     font-size: 12px;
     font-weight: 600;
@@ -4210,7 +4212,7 @@ function renderHistoryWall(mode = '') {
       </div>
       <div class="wall-etf-numbers-row">
         <div class="wall-etf-shares-block">
-          <span class="wall-etf-shares-big wall-shares-add">+${f.shares_delta_zhang.toLocaleString()}<span class="wall-etf-shares-unit">張</span></span>
+          <span class="wall-etf-shares-big wall-shares-add${f.shares_delta_zhang >= 1000 ? ' is-large-num' : ''}">+${f.shares_delta_zhang.toLocaleString()}<span class="wall-etf-shares-unit">張</span></span>
         </div>
         <div class="wall-etf-numbers-right">
           ${f.cost_str
@@ -4451,10 +4453,7 @@ function setupWallSearch() {
 
   let matches = [];
   let cursor = -1;
-  let debounceT = null;
   let lastQuery = '';
-  const AUTO_TRIGGER_ENABLED = false; // 測試期間先關閉自動觸發，全部改 Enter 強制觸發
-  const AUTO_TRIGGER_RE = /\d{4}/;
 
   const matchStock = (q, s) =>
     (s.ticker || '').toLowerCase().includes(q) ||
@@ -4600,20 +4599,12 @@ function setupWallSearch() {
   };
 
   input.addEventListener('input', () => {
-    clearTimeout(debounceT);
-    const val = input.value;
-    if (!val.trim()) { clearAll(); lastQuery = ''; return; }
-    if (!AUTO_TRIGGER_ENABLED || !AUTO_TRIGGER_RE.test(val)) return; // 中文名等需按 Enter 強制觸發
-    debounceT = setTimeout(() => {
-      refresh(true);
-      lastQuery = input.value;
-    }, 90);
+    if (!input.value.trim()) { clearAll(); lastQuery = ''; }
   });
   input.addEventListener('keydown', (e) => {
     if (e.isComposing || e.keyCode === 229) return; // 忽略輸入法選字確認的 Enter
     if (e.key === 'Enter') {
       e.preventDefault();
-      clearTimeout(debounceT);
       const val = input.value;
       if (!val.trim()) { clearAll(); lastQuery = ''; return; }
       if (val === lastQuery && matches.length) {
@@ -7419,8 +7410,6 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   var sfHits = [], sfIdx = -1;
   var sfInput, sfPrev, sfNext, sfCount;
   var sfLastQuery = '';
-  var SF_AUTO_TRIGGER_ENABLED = false; // 測試期間先關閉自動觸發，全部改 Enter 強制觸發
-  var SF_AUTO_TRIGGER_RE = /\d{4}/;
 
   function sfBuildHits(query) {
     var q = query.trim().toUpperCase();
@@ -7502,18 +7491,12 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     sfCount = document.getElementById('sfSearchCount');
     if (!sfInput) return;
 
-    var sfTimer;
     sfInput.addEventListener('input', function() {
-      clearTimeout(sfTimer);
-      var q = sfInput.value;
-      if (!q.trim()) { sfHits = []; sfIdx = -1; sfUpdateUI(); sfLastQuery = ''; return; }
-      if (!SF_AUTO_TRIGGER_ENABLED || !SF_AUTO_TRIGGER_RE.test(q)) return; // 中文名等需按 Enter 強制觸發
-      sfTimer = setTimeout(function() { sfDoSearch(q); sfLastQuery = q; }, 90);
+      if (!sfInput.value.trim()) { sfHits = []; sfIdx = -1; sfUpdateUI(); sfLastQuery = ''; }
     });
     sfInput.addEventListener('keydown', function(e) {
       if (e.isComposing || e.keyCode === 229) return; // 忽略輸入法選字確認的 Enter
       if (e.key === 'Enter') {
-        clearTimeout(sfTimer);
         var q = sfInput.value;
         if (!q.trim()) { sfHits = []; sfIdx = -1; sfUpdateUI(); sfLastQuery = ''; return; }
         if (q === sfLastQuery && sfHits.length) {
