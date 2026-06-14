@@ -4452,6 +4452,9 @@ function setupWallSearch() {
   let matches = [];
   let cursor = -1;
   let debounceT = null;
+  let lastQuery = '';
+  const AUTO_TRIGGER_ENABLED = false; // 測試期間先關閉自動觸發，全部改 Enter 強制觸發
+  const AUTO_TRIGGER_RE = /\d{4}/;
 
   const matchStock = (q, s) =>
     (s.ticker || '').toLowerCase().includes(q) ||
@@ -4584,9 +4587,9 @@ function setupWallSearch() {
 
   const refresh = (autoJump) => {
     matches = buildMatches(input.value);
-    cursor = matches.length ? 0 : -1;
+    cursor = matches.length ? matches.length - 1 : -1;
     updateCount();
-    if (autoJump && matches.length) goToMatch(0);
+    if (autoJump && matches.length) goToMatch(cursor);
   };
 
   const clearAll = () => {
@@ -4599,16 +4602,26 @@ function setupWallSearch() {
   input.addEventListener('input', () => {
     clearTimeout(debounceT);
     const val = input.value;
+    if (!val.trim()) { clearAll(); lastQuery = ''; return; }
+    if (!AUTO_TRIGGER_ENABLED || !AUTO_TRIGGER_RE.test(val)) return; // 中文名等需按 Enter 強制觸發
     debounceT = setTimeout(() => {
-      if (!val.trim()) { clearAll(); return; }
       refresh(true);
+      lastQuery = input.value;
     }, 90);
   });
   input.addEventListener('keydown', (e) => {
+    if (e.isComposing || e.keyCode === 229) return; // 忽略輸入法選字確認的 Enter
     if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(debounceT);
-      refresh(true);
+      const val = input.value;
+      if (!val.trim()) { clearAll(); lastQuery = ''; return; }
+      if (val === lastQuery && matches.length) {
+        goToMatch(cursor - 1); // 同一筆查詢，往前追溯較舊日期
+      } else {
+        refresh(true);
+        lastQuery = val;
+      }
     } else if (e.key === 'ArrowDown' || e.key === 'Down') {
       e.preventDefault();
       if (matches.length) goToMatch(cursor + 1);
@@ -4618,6 +4631,7 @@ function setupWallSearch() {
     } else if (e.key === 'Escape') {
       input.value = '';
       clearAll();
+      lastQuery = '';
       input.blur();
     }
   });
