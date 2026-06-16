@@ -7393,7 +7393,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
       var strip = getStripForCard();
       if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
       waitForStableRect(getMainPlusStripRect, function() {
-        showStep(getMainPlusStripRect, '主卡 ＋ 延伸卡', '點開主卡後，同樣可以看到後續加碼資訊。並在最後顯示<span style="color:var(--accent);font-weight:700">平均購入最低成本</span>（皆以當日最低收盤價做估算）。', 5, 'bottom', showStep6, function() { collapseStrip(); showStep4(); });
+        showStep(getMainPlusStripRect, '主卡 ＋ 延伸卡', '點開主卡後，同樣可以看到後續加碼資訊。並在最後顯示<span style="color:var(--accent);font-weight:700">平均購入最低成本</span>（皆以當日最低價做估算）。', 5, 'bottom', showStep6, function() { collapseStrip(); showStep4(); });
       });
     }, 200);
   }
