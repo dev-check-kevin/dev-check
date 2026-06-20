@@ -5411,7 +5411,7 @@ async function copyShareLink() {
 }
 
 // ── Upgrade Modal ───────────────────────────────────────────────────────
-const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28626647&vanity=15944369&is_free_trial=true';
+const PATREON_FOUNDER_URL = 'https://www.patreon.com/checkout/etfcross?rid=28626647';
 // const PATREON_PRO_URL  = '...';  // Pro 尚未開放，連結先註解掉
 
 async function showUpgradeModal(context) {
@@ -5464,7 +5464,7 @@ async function showUpgradeModal(context) {
         <div class="pl-plan-feats">${p.features.map(f => '• ' + f).join('<br>')}</div>
         <div class="pl-plan-price">${p.full
           ? '<span style="font-size:13px;color:#9a8a6c">名額已滿</span>'
-          : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-note">${p.note}</div>${p.disabled ? '' : '<div class="pl-plan-cancel">7天內隨時可取消</div><div class="pl-plan-cancel">訂閱在 Patreon 完成</div>'}`
+          : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-note">${p.note}</div>${p.disabled ? '' : '<div class="pl-plan-cancel">訂閱在 Patreon 完成</div>'}`
         }</div>
       </button>
     `;
@@ -5542,7 +5542,7 @@ async function showMembershipModal() {
           ? '<span style="font-size:13px;color:#9a8a6c">名額已滿</span>'
           : (isCurrent
             ? `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-note">${p.note}</div><div style="font-size:11px;color:#d29922;margin-top:4px">✓ 目前方案</div>`
-            : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-note">${p.note}</div>${p.disabled ? '' : '<div class="pl-plan-cancel">7天內隨時可取消</div><div class="pl-plan-cancel">訂閱在 Patreon 完成</div>'}`
+            : `$${p.price}<span class="pl-plan-unit"> ${p.unit}</span><div class="pl-plan-note">${p.note}</div>${p.disabled ? '' : '<div class="pl-plan-cancel">訂閱在 Patreon 完成</div>'}`
           )
         }</div>
       </button>
