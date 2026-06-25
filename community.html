@@ -1248,50 +1248,13 @@
     overflow-x: auto;
     scrollbar-width: none;
     cursor: grab;
-    opacity: 1;
-    transition: opacity 0.3s ease;
   }
   .history-wall-h.is-dragging { cursor: grabbing; user-select: none; }
   .history-wall-h::-webkit-scrollbar { display: none; }
-  .history-wall-h.pre-load {
-    height: 0;
-    opacity: 0;
-    overflow: hidden;
-  }
-  .history-wall-loading {
-    position: relative;
-    overflow: hidden;
-  }
-  .history-wall-loading.is-hidden { display: none; }
-  .history-wall-loading-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text2);
-    white-space: nowrap;
-    z-index: 1;
+  .history-wall-h.is-locked {
     pointer-events: none;
+    cursor: default;
   }
-  .history-wall-loading-row {
-    display: flex;
-    gap: 12px;
-  }
-  .history-wall-loading-skel {
-    flex-shrink: 0;
-    width: 350px;
-    height: 240px;
-    border-radius: var(--radius);
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    animation: skel-pulse 1.4s ease-in-out infinite;
-  }
-  .history-wall-loading-skel:nth-child(2) { animation-delay: 0.1s; }
-  .history-wall-loading-skel:nth-child(3) { animation-delay: 0.2s; }
-  .history-wall-loading-skel:nth-child(4) { animation-delay: 0.3s; }
-  .history-wall-loading-skel:nth-child(5) { animation-delay: 0.4s; }
   .hw-scrollbar-track {
     height: 4px; position: relative; margin-top: 8px; border-radius: 2px;
   }
@@ -3654,17 +3617,7 @@
         <button id="hwSearchNext" class="hw-search-arrow" type="button" aria-label="下一筆" disabled>›</button>
       </div>
     </div>
-    <div class="history-wall-loading" id="historyWallLoading">
-      <div class="history-wall-loading-text">載入中…</div>
-      <div class="history-wall-loading-row">
-        <div class="history-wall-loading-skel"></div>
-        <div class="history-wall-loading-skel"></div>
-        <div class="history-wall-loading-skel"></div>
-        <div class="history-wall-loading-skel"></div>
-        <div class="history-wall-loading-skel"></div>
-      </div>
-    </div>
-    <div id="historyWall" class="history-wall-h pre-load"></div>
+    <div id="historyWall" class="history-wall-h is-locked"></div>
     <div class="hw-scrollbar-track"><div id="historyWallThumb" class="hw-scrollbar-thumb"></div></div>
   </div>
 </div>
@@ -5715,9 +5668,7 @@ window.onAuthChanged = () => {
   const weightDateLoading = document.getElementById('weightDateLoading');
   if (weightDateLoading) weightDateLoading.style.display = 'none';
   const historyWall = document.getElementById('historyWall');
-  if (historyWall) { historyWall.classList.remove('pre-load'); historyWall.style.opacity = '1'; historyWall.scrollLeft = historyWall.scrollWidth; }
-  const historyWallLoading = document.getElementById('historyWallLoading');
-  if (historyWallLoading) historyWallLoading.classList.add('is-hidden');
+  if (historyWall) historyWall.classList.remove('is-locked');
 };
 
 // Build code→name/industry lookup once
