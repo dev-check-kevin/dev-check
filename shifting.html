@@ -7092,10 +7092,12 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     currentUser = user;
     if (user) {
       renderLoggedIn(user);
-      // Fetch patreon tier + portfolio + member trial state in parallel
-      const [pa, , trial] = await Promise.all([
+      // loadUserPortfolio 會自己在完成後刷新卡片/表格 UI，不影響權限判斷，
+      // 故不放進下面的 Promise.all 一起等待 —— 避免它拖慢動態牆等權限相關內容的揭示時機。
+      loadUserPortfolio(user.uid);
+      // Fetch patreon tier + member trial state in parallel（這兩者才是 hasFullAccess() 真正需要的資料）
+      const [pa, trial] = await Promise.all([
         _fetchPatreonAccess(user.uid),
-        loadUserPortfolio(user.uid),
         _loadOrCreateMember(user),
       ]);
       const tosAccepted = checkTosAccepted();
