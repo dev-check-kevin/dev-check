@@ -4206,8 +4206,6 @@ function renderHistoryWall(mode = '') {
   const renderFollowupCard = (s, e, f) => `
     <div class="wall-stock-card wall-stock-card-followup" data-ticker="${s.ticker}" data-followup-date="${f.date_label}" style="--wc:${e.color}">
       <div class="wall-followup-date">
-        <span class="wgd-from">${f.from_label}</span>
-        <span class="arrow">→</span>
         <span class="wgd-to">${f.date_label}</span>
         <span class="wgd-dow-inline">${wallDow(f.date_label)}</span>
       </div>
@@ -4349,8 +4347,6 @@ function renderHistoryWall(mode = '') {
     <div class="wall-group">
       <div class="wall-group-date">
         <div class="wgd-range">
-          <span class="wgd-from">${g.from_label}</span>
-          <span class="arrow">→</span>
           <span class="wgd-to">${g.to_label}</span>
           <span class="wgd-dow-inline">${wallDow(g.to_label)}</span>
         </div>
@@ -4362,8 +4358,6 @@ function renderHistoryWall(mode = '') {
       <div class="wall-rem-section"${animStyle(i + wallOffset)}>
         <div class="wall-group-date">
           <div class="wgd-range">
-            <span class="wgd-from">${g.from_label}</span>
-            <span class="arrow">→</span>
             <span class="wgd-to">${g.to_label}</span>
             <span class="wgd-dow-inline">${wallDow(g.to_label)}</span>
           </div>
@@ -4907,8 +4901,6 @@ function renderHistoryContent() {
     <div class="change-event">
       <div class="change-event-header">
         <div class="change-date-range">
-          <span class="change-date">${change.from_label}</span>
-          <span style="color:var(--text3);margin:0 2px">→</span>
           <span class="change-date">${change.to_label}</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
