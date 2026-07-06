@@ -1255,6 +1255,33 @@
     pointer-events: none;
     cursor: default;
   }
+  .wall-lock-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .wall-lock-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: wall-lock-spin 0.8s linear infinite;
+  }
+  @keyframes wall-lock-spin {
+    to { transform: rotate(360deg); }
+  }
+  .wall-lock-text {
+    font-size: 13px;
+    color: var(--text2);
+  }
   .hw-scrollbar-track {
     height: 4px; position: relative; margin-top: 8px; border-radius: 2px;
   }
@@ -3728,6 +3755,10 @@
     </div>
     <div id="historyWall" class="history-wall-h is-locked"></div>
     <div class="hw-scrollbar-track"><div id="historyWallThumb" class="hw-scrollbar-thumb"></div></div>
+    <div id="wallLockIndicator" class="wall-lock-indicator">
+      <div class="wall-lock-spinner"></div>
+      <div class="wall-lock-text" id="wallLockText">載入中…</div>
+    </div>
   </div>
 </div>
 </div><!-- end page-timelineurl -->
@@ -5857,6 +5888,16 @@ document.addEventListener('click', e => {
 });
 
 
+// 動態牆 is-locked 期間顯示置中 spinner；10 秒後仍鎖著就提示網路訊號不穩
+(function() {
+  const wall = document.getElementById('historyWall');
+  const text = document.getElementById('wallLockText');
+  if (!wall || !wall.classList.contains('is-locked')) return;
+  window._wallLockTimeoutId = setTimeout(() => {
+    if (wall.classList.contains('is-locked') && text) text.textContent = '網路訊號不穩…';
+  }, 10000);
+})();
+
 // Called by Firebase module when auth state changes; re-renders cards + modal
 window.onAuthChanged = () => {
   renderETFCards();
@@ -5873,6 +5914,9 @@ window.onAuthChanged = () => {
   if (weightDateLoading) weightDateLoading.style.display = 'none';
   const historyWall = document.getElementById('historyWall');
   if (historyWall) historyWall.classList.remove('is-locked');
+  const wallLockIndicator = document.getElementById('wallLockIndicator');
+  if (wallLockIndicator) wallLockIndicator.style.display = 'none';
+  if (window._wallLockTimeoutId) { clearTimeout(window._wallLockTimeoutId); window._wallLockTimeoutId = null; }
 };
 
 // Build code→name/industry lookup once
