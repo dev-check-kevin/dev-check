@@ -4693,6 +4693,7 @@ function setupWallSearch() {
   let matches = [];
   let cursor = -1;
   let lastQuery = '';
+  let pendingJumpTimeout = null;
 
   const matchStock = (q, s) =>
     (s.ticker || '').toLowerCase().includes(q) ||
@@ -4707,8 +4708,6 @@ function setupWallSearch() {
     const q = (raw || '').trim().toLowerCase();
     if (!q) return [];
     const visibleData = container._visibleData || [];
-    const latest5Set  = container._latest5Set;
-    const hasFull = (typeof hasFullAccess === 'function') ? hasFullAccess() : true;
     const seen = new Set();
     const out = [];
     visibleData.forEach((g, gi) => {
@@ -4720,19 +4719,6 @@ function setupWallSearch() {
           out.push({ gi, dateLabel: g.to_label, kind: 'added', ticker: hitAdded.ticker });
         }
       }
-      (g.added_stocks || []).forEach(s => {
-        if (!matchStock(q, s)) return;
-        (s.etfs || []).forEach(e => {
-          (e.follow_ups || []).forEach(f => {
-            if (!hasFull && latest5Set && !latest5Set.has(f.date_label)) return;
-            const key = `${gi}|f|${s.ticker}|${f.date_label}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              out.push({ gi, dateLabel: f.date_label, kind: 'followup', ticker: s.ticker });
-            }
-          });
-        });
-      });
       const hitRem = (g.removed_stocks || []).find(s => matchStock(q, s));
       if (hitRem) {
         const key = `${gi}|r|${hitRem.ticker}`;
@@ -4777,49 +4763,41 @@ function setupWallSearch() {
     el.classList.remove('is-flash');
     void el.offsetWidth;
     el.classList.add('is-flash');
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    el.scrollIntoView({ behavior: 'auto', block: 'nearest' });
   };
 
   const goToMatch = (idx) => {
     if (!matches.length) return;
+    if (pendingJumpTimeout) {
+      clearTimeout(pendingJumpTimeout);
+      pendingJumpTimeout = null;
+    }
     cursor = ((idx % matches.length) + matches.length) % matches.length;
     updateCount();
     const m = matches[cursor];
     const groupEl = findGroupEl(m.gi);
     if (!groupEl) return;
 
-    const targetLeft = groupEl.offsetLeft - (container.clientWidth - groupEl.offsetWidth) / 2;
-    container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+    const containerRect = container.getBoundingClientRect();
+    const groupRect = groupEl.getBoundingClientRect();
+    const centerDelta = (groupRect.left + groupRect.width / 2) - (containerRect.left + containerRect.width / 2);
+    container.scrollTo({ left: Math.max(0, container.scrollLeft + centerDelta), behavior: 'smooth' });
 
     clearFlash();
 
-    setTimeout(() => {
+    pendingJumpTimeout = setTimeout(() => {
+      pendingJumpTimeout = null;
       let targetCard = null;
-      if (m.kind === 'added' || m.kind === 'followup') {
+      if (m.kind === 'added') {
         const sec = groupEl.querySelector('.wall-add-section');
         if (sec) sec.classList.add('is-expanded');
-        const entryCard = sec && sec.querySelector(`.wall-stock-card-add[data-ticker="${m.ticker}"]`);
-        if (m.kind === 'added') {
-          targetCard = entryCard;
-        } else if (entryCard) {
-          document.querySelectorAll('.wall-followup-strip.is-expanded').forEach(s => s.classList.remove('is-expanded'));
-          document.querySelectorAll('.wall-stock-card[data-expandable="1"].is-active').forEach(c => c.classList.remove('is-active'));
-          const wrap = entryCard.parentElement;
-          const strip = wrap && wrap.querySelector(':scope > .wall-followup-strip');
-          if (strip) strip.classList.add('is-expanded');
-          entryCard.classList.add('is-active');
-          targetCard = strip && strip.querySelector(`.wall-stock-card-followup[data-followup-date="${m.dateLabel}"][data-ticker="${m.ticker}"]`);
-        }
+        targetCard = sec && sec.querySelector(`.wall-stock-card-add[data-ticker="${m.ticker}"]`);
       } else if (m.kind === 'removed') {
         const sec = groupEl.querySelector('.wall-rem-section');
         if (sec) sec.classList.add('is-expanded');
         targetCard = sec && sec.querySelector(`.wall-stock-card-rem[data-ticker="${m.ticker}"]`);
       }
-      if (m.kind === 'followup') {
-        setTimeout(() => flashCard(targetCard), 280);
-      } else {
-        flashCard(targetCard);
-      }
+      flashCard(targetCard);
     }, 320);
   };
 
@@ -4831,6 +4809,10 @@ function setupWallSearch() {
   };
 
   const clearAll = () => {
+    if (pendingJumpTimeout) {
+      clearTimeout(pendingJumpTimeout);
+      pendingJumpTimeout = null;
+    }
     matches = [];
     cursor = -1;
     updateCount();
