@@ -5667,17 +5667,17 @@ async function showUpgradeModal(context) {
   `;
 
   const renderPlans = (config) => {
-    const founderRem = config ? Math.max(0, (config.foundersMax || 500) - (config.foundersCount || 0)) : null;
+    const founderRem = config ? Math.max(0, (config.foundersMax || 100) - (config.foundersCount || 0)) : null;
     const proRem     = config ? Math.max(0, (config.proMax     || 1500) - (config.proCount     || 0)) : null;
     const founderFull = founderRem === 0;
     const proFull     = proRem === 0;
 
     const plans = [
       {
-        id: 'founder', name: '創始會員', subtitle: 'Founder<br>限 500 名',
+        id: 'founder', name: '創始會員', subtitle: 'Founder<br>限額',
         note: founderRem !== null
           ? (founderFull ? '名額已滿' : `首波 · 剩 ${founderRem} 名`)
-          : (config === null ? '首波限額 500 位<br>永久價格' : '剩餘名額確認中…'),
+          : (config === null ? '首波限額<br>永久價格' : '剩餘名額確認中…'),
         features: ['支持營運成本 - 軟硬體, 伺服器, 雲端空間等開銷', '創始會員專屬 - 永久訂閱價格', '解鎖所有軟體進階功能', '目前含完整異動歷史, 成本估算', '目前含卡片交集數量, 追蹤數量擴充至50 檔', '未來含所有軟體新功能'],
         price: 6, unit: 'USD / 月', url: PATREON_FOUNDER_URL, full: founderFull,
       },
@@ -5740,17 +5740,17 @@ async function showMembershipModal() {
   `;
 
   const renderPlansForMember = (config) => {
-    const founderRem = config ? Math.max(0, (config.foundersMax || 500) - (config.foundersCount || 0)) : null;
+    const founderRem = config ? Math.max(0, (config.foundersMax || 100) - (config.foundersCount || 0)) : null;
     const proRem     = config ? Math.max(0, (config.proMax     || 1500) - (config.proCount     || 0)) : null;
     const founderFull = founderRem === 0;
     const proFull     = proRem === 0;
 
     const plans = [
       {
-        id: 'founder', name: '創始會員', subtitle: 'Founder<br>限 500 名',
+        id: 'founder', name: '創始會員', subtitle: 'Founder<br>限額',
         note: founderRem !== null
           ? (founderFull ? '名額已滿' : `首波 · 剩 ${founderRem} 名`)
-          : (config === null ? '首波限額 500 位<br>永久價格' : '剩餘名額確認中…'),
+          : (config === null ? '首波限額<br>永久價格' : '剩餘名額確認中…'),
         features: ['支持營運成本 - 軟硬體, 伺服器, 雲端空間等開銷', '創始會員專屬 - 永久訂閱價格', '解鎖所有軟體進階功能', '目前含完整異動歷史, 成本估算', '目前含卡片交集數量, 追蹤數量擴充至50 檔', '未來含所有軟體新功能'],
         price: 6, unit: 'USD / 月', url: PATREON_FOUNDER_URL, full: founderFull,
       },
