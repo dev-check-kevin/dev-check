@@ -2866,6 +2866,24 @@
     font-size: 14px; color: var(--text); line-height: 1.65;
     white-space: pre-wrap; word-break: break-word;
   }
+  .note-mod-reply {
+    margin-top: 10px; padding: 10px 12px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg2));
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+  }
+  .note-mod-reply-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+  }
+  .mod-reply-badge {
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+  .note-mod-reply-time { font-size: 11px; color: var(--text3); }
+  .note-mod-reply-content {
+    font-size: 13px; color: var(--text); line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+  }
   .btn-delete-note {
     background: none; border: none; color: var(--text3); font-size: 12px;
     cursor: pointer; padding: 4px 8px; border-radius: 6px;
@@ -7106,6 +7124,15 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     const repliedBadge = d.alreadyReply === true
       ? '<span class="mod-replied-badge">✓ 已透過信件回覆</span>'
       : '';
+    const modReplyBlock = (typeof d.modReply === 'string' && d.modReply.trim())
+      ? `<div class="note-mod-reply">
+           <div class="note-mod-reply-header">
+             <span class="mod-reply-badge">ETF Cross :</span>
+             ${d.modReplyAt ? `<span class="note-mod-reply-time">${fmtTime(d.modReplyAt)}</span>` : ''}
+           </div>
+           <div class="note-mod-reply-content">${d.modReply.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+         </div>`
+      : '';
     return `
       <div class="note-card ${isOwn ? 'own' : ''}">
         <div class="note-header">
@@ -7117,6 +7144,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
           ${repliedBadge}
         </div>
         <div class="note-content">${d.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        ${modReplyBlock}
       </div>`;
   }
 
