@@ -2831,16 +2831,13 @@
     display: flex; align-items: center; gap: 10px;
   }
   .notes-list {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
     gap: 12px;
-    align-items: start;
+    align-items: flex-start;
   }
-  @media (max-width: 1100px) {
-    .notes-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  @media (max-width: 720px) {
-    .notes-list { grid-template-columns: 1fr; }
+  .notes-column {
+    flex: 1 1 0; min-width: 0;
+    display: flex; flex-direction: column; gap: 12px;
   }
   .note-card {
     background: var(--bg2); border: 1px solid var(--border);
@@ -7153,23 +7150,51 @@ if (!document.documentElement.classList.contains('intro-seen')) {
     if (btn) btn.disabled = myCount >= MAX_NOTES;
   }
 
+  function getNotesColumnCount() {
+    const w = window.innerWidth;
+    if (w <= 720) return 1;
+    if (w <= 1100) return 2;
+    return 3;
+  }
+
+  let latestNoteDocs = [];
+  let notesColumnCount = getNotesColumnCount();
+
+  function renderNotesList() {
+    const list = document.getElementById('notesList');
+    if (!list) return;
+    if (!latestNoteDocs.length) {
+      list.innerHTML = '<div class="notes-empty">還沒有任何筆記，登入後成為第一個留言的人！</div>';
+      return;
+    }
+    const cols = Array.from({ length: notesColumnCount }, () => []);
+    latestNoteDocs.forEach((docSnap, i) => cols[i % notesColumnCount].push(renderNoteCard(docSnap)));
+    list.innerHTML = cols.map(col => `<div class="notes-column">${col.join('')}</div>`).join('');
+  }
+
   function startNotesListener() {
     if (unsubNotes) return;
     const q = query(NOTES_COL, orderBy('createdAt', 'desc'));
     unsubNotes = onSnapshot(q, (snap) => {
-      const list = document.getElementById('notesList');
-      if (!list) return;
-      if (snap.empty) {
-        list.innerHTML = '<div class="notes-empty">還沒有任何筆記，登入後成為第一個留言的人！</div>';
-        updateCounter(0);
-        return;
-      }
-      list.innerHTML = snap.docs.map(renderNoteCard).join('');
+      latestNoteDocs = snap.docs;
+      renderNotesList();
       const myCount = snap.docs.filter(d => d.data().uid === currentUser?.uid).length;
       updateCounter(myCount);
     });
   }
   startNotesListener();
+
+  let notesResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(notesResizeTimer);
+    notesResizeTimer = setTimeout(() => {
+      const n = getNotesColumnCount();
+      if (n !== notesColumnCount) {
+        notesColumnCount = n;
+        renderNotesList();
+      }
+    }, 150);
+  });
 
   function updateInputArea(user) {
     const inputArea   = document.getElementById('notesInputArea');
