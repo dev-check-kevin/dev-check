@@ -5954,10 +5954,13 @@ async function _maybeLoadFull() {
         else if (k === 'wall')      WALL_DATA = v;
         else if (k === 'consensus') CONSENSUS_BY_DATE = v;
       }
-      // 非 gated-揭曉的可見區（shifting 內容）以完整資料重繪；gated 區（牆/日期列）由 _revealGatedOnce 一次揭曉
-      if (typeof renderHistoryETFTabs === 'function') renderHistoryETFTabs();
-      if (typeof renderHistoryContent === 'function') renderHistoryContent();
-      if (typeof updateHistoryDesc === 'function') updateHistoryDesc();
+      // 只在本頁確實載入了 shifting 資料時才重繪其內容（timeline 頁只有 wall，無 HISTORY_DATA，
+      // 呼叫 renderHistoryETFTabs 會對 undefined.map 崩）。gated 區（牆/日期列）由 _revealGatedOnce 一次揭曉。
+      if (gatedKeys.includes('history') || gatedKeys.includes('consensus')) {
+        if (typeof renderHistoryETFTabs === 'function') renderHistoryETFTabs();
+        if (typeof renderHistoryContent === 'function') renderHistoryContent();
+        if (typeof updateHistoryDesc === 'function') updateHistoryDesc();
+      }
     } catch (e) {
       console.warn('[getFullData] 取得完整資料失敗，停留在 free 版', e);
     }
