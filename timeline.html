@@ -1310,6 +1310,27 @@
     padding: 12px;
   }
 
+  /* 動態牆左端 skeleton 佔位欄（會員完整資料 getFullData 未到時撐寬+撐高，補真卡後移除） */
+  .wall-group-skeleton {
+    pointer-events: none;
+    user-select: none;
+  }
+  .wall-sk-line {
+    border-radius: 6px;
+    background: linear-gradient(100deg,
+      color-mix(in srgb, var(--text3) 7%, var(--bg3)) 30%,
+      color-mix(in srgb, var(--text3) 16%, var(--bg3)) 50%,
+      color-mix(in srgb, var(--text3) 7%, var(--bg3)) 70%);
+    background-size: 220% 100%;
+    animation: wall-sk-pulse 1.4s ease-in-out infinite;
+  }
+  .wall-sk-date { height: 18px; width: 45%; margin: 2px 0 12px; }
+  .wall-sk-card { height: 46px; margin-bottom: 8px; }
+  @keyframes wall-sk-pulse {
+    0%   { background-position: 180% 0; }
+    100% { background-position: -20% 0; }
+  }
+
   /* ── Passive ETF toggle panel ── */
   /* 外層純動畫裁切容器：width 0→350px 像滑門揭開內層 */
   .wall-passive-panel {
@@ -3681,7 +3702,7 @@
 
   <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
     <div class="section-title" style="margin-bottom:0">ETF交集表</div>
-    <span style="font-size:12px;color:var(--text3);font-weight:400">(2026/07/20 全部更新)</span>
+    <span style="font-size:12px;color:var(--text3);font-weight:400">(2026/07/24 全部更新)</span>
   </div>
   <div class="etf-grid" id="etfGrid"></div>
 
@@ -3914,9 +3935,13 @@ let _gatedRevealed = false;
 // Phase 2：會員完整資料（getFullData）載入協調。非會員 _fullReady 立即為真（無完整可載）。
 let _fullReady = false;
 let _fullStarted = false;
+// 佈局用身份快取（開頁即時撐長度／揭曉用；不用於權限，權限一律走 hasFullAccess）。
+// 記上次真實身份，讓下次開頁在 auth settle 前就用正確長度佈局（會員撐完整寬高、非會員 5 日）。
+let _cachedFullAccess = null;
+try { const _ac = localStorage.getItem('etfcross_access_cache'); if (_ac !== null) _cachedFullAccess = (_ac === '1'); } catch (e) {}
 const SEMICON_PHASES_MAP  = {"2454": {"phase_id": "P1", "building": "ASIC 設計服務"}, "2379": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3034": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3661": {"phase_id": "P1", "building": "ASIC 設計服務"}, "5269": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3443": {"phase_id": "P1", "building": "ASIC 設計服務"}, "2458": {"phase_id": "P1", "building": "ASIC 設計服務"}, "6526": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3035": {"phase_id": "P1", "building": "ASIC 設計服務"}, "4966": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3592": {"phase_id": "P1", "building": "ASIC 設計服務"}, "8016": {"phase_id": "P1", "building": "ASIC 設計服務"}, "6462": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3227": {"phase_id": "P1", "building": "ASIC 設計服務"}, "6732": {"phase_id": "P1", "building": "ASIC 設計服務"}, "2388": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3014": {"phase_id": "P1", "building": "ASIC 設計服務"}, "3529": {"phase_id": "P1", "building": "IP + EDA"}, "6533": {"phase_id": "P1", "building": "IP + EDA"}, "6643": {"phase_id": "P1", "building": "IP + EDA"}, "5274": {"phase_id": "P1", "building": "BMC 管理晶片"}, "4919": {"phase_id": "P1", "building": "BMC 管理晶片"}, "6415": {"phase_id": "P1", "building": "電源管理 IC"}, "8081": {"phase_id": "P1", "building": "電源管理 IC"}, "3438": {"phase_id": "P1", "building": "電源管理 IC"}, "6488": {"phase_id": "P2", "building": "矽晶圓廠"}, "3532": {"phase_id": "P2", "building": "矽晶圓廠"}, "6182": {"phase_id": "P2", "building": "矽晶圓廠"}, "5483": {"phase_id": "P2", "building": "矽晶圓廠"}, "1785": {"phase_id": "P2", "building": "電子化學品"}, "1717": {"phase_id": "P2", "building": "電子化學品"}, "5434": {"phase_id": "P2", "building": "電子化學品"}, "1711": {"phase_id": "P2", "building": "電子化學品"}, "4772": {"phase_id": "P2", "building": "電子化學品"}, "1773": {"phase_id": "P2", "building": "電子化學品"}, "5234": {"phase_id": "P2", "building": "電子化學品"}, "4755": {"phase_id": "P2", "building": "電子化學品"}, "6667": {"phase_id": "P2", "building": "電子化學品"}, "2338": {"phase_id": "P2", "building": "光罩"}, "2330": {"phase_id": "P3", "building": "邏輯晶圓代工"}, "2303": {"phase_id": "P3", "building": "邏輯晶圓代工"}, "5347": {"phase_id": "P3", "building": "特殊製程晶圓代工"}, "6770": {"phase_id": "P3", "building": "特殊製程晶圓代工"}, "3105": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "3707": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "2455": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "8086": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "3016": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "3081": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "4991": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "4971": {"phase_id": "P3", "building": "化合物半導體代工/磊晶"}, "7751": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "3680": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "1560": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "8028": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "6187": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "3583": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "3131": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "6640": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "2464": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "3413": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "8027": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "6208": {"phase_id": "P4", "building": "晶圓 + 先進封裝設備"}, "2404": {"phase_id": "P4", "building": "無塵室機電"}, "6196": {"phase_id": "P4", "building": "無塵室機電"}, "6691": {"phase_id": "P4", "building": "無塵室機電"}, "6139": {"phase_id": "P4", "building": "無塵室機電"}, "2360": {"phase_id": "P4", "building": "ATE 測試設備"}, "7769": {"phase_id": "P4", "building": "ATE 測試設備"}, "3711": {"phase_id": "P5", "building": "OSAT 後段封裝"}, "2449": {"phase_id": "P5", "building": "OSAT 後段封裝"}, "6271": {"phase_id": "P5", "building": "OSAT 後段封裝"}, "2441": {"phase_id": "P5", "building": "OSAT 後段封裝"}, "2369": {"phase_id": "P5", "building": "OSAT 後段封裝"}, "6239": {"phase_id": "P5", "building": "FOPLP 面板級封裝"}, "3481": {"phase_id": "P5", "building": "FOPLP 面板級封裝"}, "3264": {"phase_id": "P5", "building": "FOPLP 面板級封裝"}, "6257": {"phase_id": "P5", "building": "FOPLP 面板級封裝"}, "6223": {"phase_id": "P5", "building": "探針卡"}, "6510": {"phase_id": "P5", "building": "探針卡"}, "6515": {"phase_id": "P5", "building": "探針卡"}, "6683": {"phase_id": "P5", "building": "探針卡"}, "6217": {"phase_id": "P5", "building": "探針卡"}, "3587": {"phase_id": "P5", "building": "MA / FA 失效分析"}, "6830": {"phase_id": "P5", "building": "MA / FA 失效分析"}, "3289": {"phase_id": "P5", "building": "MA / FA 失效分析"}, "6147": {"phase_id": "P5", "building": "Driver IC COF 封裝"}, "8150": {"phase_id": "P5", "building": "Driver IC COF 封裝"}, "3305": {"phase_id": "P5", "building": "銲材 / BGA 錫球"}, "3236": {"phase_id": "P5", "building": "銲材 / BGA 錫球"}, "6278": {"phase_id": "P5", "building": "導線架"}, "2408": {"phase_id": "P6", "building": "HBM 高頻寬記憶體"}, "8299": {"phase_id": "P6", "building": "HBM 高頻寬記憶體"}, "2344": {"phase_id": "P6", "building": "HBM 高頻寬記憶體"}, "2337": {"phase_id": "P6", "building": "HBM 高頻寬記憶體"}, "3374": {"phase_id": "P6", "building": "TSV 矽穿孔"}, "6531": {"phase_id": "P6", "building": "客製化記憶體 IC"}, "3037": {"phase_id": "P7", "building": "ABF 載板"}, "8046": {"phase_id": "P7", "building": "ABF 載板"}, "3189": {"phase_id": "P7", "building": "ABF 載板"}, "1802": {"phase_id": "P7", "building": "玻纖布"}, "1815": {"phase_id": "P7", "building": "玻纖布"}, "5475": {"phase_id": "P7", "building": "玻纖布"}, "2383": {"phase_id": "P7", "building": "CCL 銅箔基板"}, "6274": {"phase_id": "P7", "building": "CCL 銅箔基板"}, "6213": {"phase_id": "P7", "building": "CCL 銅箔基板"}, "1303": {"phase_id": "P7", "building": "CCL 銅箔基板"}, "8358": {"phase_id": "P7", "building": "HVLP 銅箔"}, "4958": {"phase_id": "P7", "building": "PCB 主機板"}, "2368": {"phase_id": "P7", "building": "PCB 主機板"}, "3044": {"phase_id": "P7", "building": "PCB 主機板"}, "8155": {"phase_id": "P7", "building": "PCB 主機板"}, "2313": {"phase_id": "P7", "building": "PCB 主機板"}, "2355": {"phase_id": "P7", "building": "PCB 主機板"}, "3533": {"phase_id": "P7", "building": "連接器"}, "3003": {"phase_id": "P7", "building": "連接器"}, "3665": {"phase_id": "P7", "building": "連接器"}, "5457": {"phase_id": "P7", "building": "連接器"}, "3363": {"phase_id": "P7", "building": "光通訊 FAU"}, "3163": {"phase_id": "P7", "building": "光通訊 FAU"}, "6442": {"phase_id": "P7", "building": "光通訊模組封裝"}, "3450": {"phase_id": "P7", "building": "光通訊模組封裝"}, "4979": {"phase_id": "P7", "building": "光通訊模組封裝"}, "4977": {"phase_id": "P7", "building": "光通訊模組封裝"}, "3234": {"phase_id": "P7", "building": "光通訊模組封裝"}, "4908": {"phase_id": "P7", "building": "光通訊模組封裝"}, "6451": {"phase_id": "P7", "building": "光通訊模組封裝"}, "5289": {"phase_id": "P7", "building": "工業嵌入式儲存"}, "2345": {"phase_id": "P7", "building": "網路交換器"}, "3596": {"phase_id": "P7", "building": "網路交換器"}, "2327": {"phase_id": "P8", "building": "MLCC 陶瓷電容"}, "2492": {"phase_id": "P8", "building": "MLCC 陶瓷電容"}, "3026": {"phase_id": "P8", "building": "MLCC 陶瓷電容"}, "6173": {"phase_id": "P8", "building": "MLCC 陶瓷電容"}, "5328": {"phase_id": "P8", "building": "MLCC 陶瓷電容"}, "2472": {"phase_id": "P8", "building": "鋁質電容"}, "6449": {"phase_id": "P8", "building": "鋁質電容"}, "2375": {"phase_id": "P8", "building": "鋁質電容"}, "3357": {"phase_id": "P8", "building": "TLVR 電感"}, "6862": {"phase_id": "P8", "building": "TLVR 電感"}, "6284": {"phase_id": "P8", "building": "其他電感 / 磁性材料"}, "6432": {"phase_id": "P8", "building": "其他電感 / 磁性材料"}, "6155": {"phase_id": "P8", "building": "其他電感 / 磁性材料"}, "2478": {"phase_id": "P8", "building": "電阻 / 陶瓷基板"}, "3624": {"phase_id": "P8", "building": "電阻 / 陶瓷基板"}, "6127": {"phase_id": "P8", "building": "電阻 / 陶瓷基板"}, "2481": {"phase_id": "P8", "building": "功率元件"}, "8255": {"phase_id": "P8", "building": "功率元件"}, "5305": {"phase_id": "P8", "building": "功率元件"}, "3675": {"phase_id": "P8", "building": "功率元件"}, "8261": {"phase_id": "P8", "building": "功率元件"}, "5299": {"phase_id": "P8", "building": "功率元件"}, "2308": {"phase_id": "P9", "building": "PSU + HVDC 電源"}, "2301": {"phase_id": "P9", "building": "PSU + HVDC 電源"}, "6282": {"phase_id": "P9", "building": "PSU + HVDC 電源"}, "6412": {"phase_id": "P9", "building": "PSU + HVDC 電源"}, "2385": {"phase_id": "P9", "building": "PSU + HVDC 電源"}, "1519": {"phase_id": "P9", "building": "重電變壓器"}, "1513": {"phase_id": "P9", "building": "重電變壓器"}, "1503": {"phase_id": "P9", "building": "重電變壓器"}, "1514": {"phase_id": "P9", "building": "重電變壓器"}, "1504": {"phase_id": "P9", "building": "重電變壓器"}, "2371": {"phase_id": "P9", "building": "重電變壓器"}, "8996": {"phase_id": "P9", "building": "燃料電池"}, "3211": {"phase_id": "P9", "building": "BBU 備援電池"}, "3323": {"phase_id": "P9", "building": "BBU 備援電池"}, "4931": {"phase_id": "P9", "building": "BBU 備援電池"}, "3017": {"phase_id": "P10", "building": "液冷散熱"}, "3324": {"phase_id": "P10", "building": "液冷散熱"}, "3653": {"phase_id": "P10", "building": "液冷散熱"}, "6805": {"phase_id": "P10", "building": "液冷散熱"}, "2421": {"phase_id": "P10", "building": "液冷散熱"}, "2059": {"phase_id": "P11", "building": "機架 / 滑軌"}, "6584": {"phase_id": "P11", "building": "機架 / 滑軌"}, "8210": {"phase_id": "P11", "building": "機架 / 滑軌"}, "3693": {"phase_id": "P11", "building": "機架 / 滑軌"}, "3376": {"phase_id": "P11", "building": "精密機構件"}, "2474": {"phase_id": "P11", "building": "精密機構件"}, "2317": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "2382": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "3231": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "2356": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "6669": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "2376": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "2357": {"phase_id": "P11", "building": "ODM 整櫃組裝"}, "2377": {"phase_id": "P11", "building": "ODM 整櫃組裝"}};   // ticker → {phase_id, building}
-const WEIGHT_ANALYSIS_DATES = ["07/20", "07/17", "07/16", "07/15", "07/14", "07/13", "07/09", "07/08", "07/07", "07/06", "07/03", "07/02", "07/01", "06/30", "06/29", "06/26", "06/25", "06/24", "06/23", "06/22", "06/18", "06/17", "06/16", "06/15", "06/12", "06/11", "06/10", "06/09", "06/08", "06/05", "06/04", "06/03", "06/02", "06/01", "05/29", "05/28", "05/27", "05/26", "05/25", "05/22", "05/21", "05/20", "05/19", "05/18", "05/15", "05/14", "05/13", "05/12", "05/11", "05/08", "05/07", "05/06", "05/05", "05/04", "04/30", "04/29", "04/28", "04/27", "04/24", "04/23", "04/22", "04/21", "04/20"];   // 新→舊
-const WALL_TOTAL_DAYS = 63;   // 動態牆總天數（Phase 2：非會員只有 free N 日時仍能算鎖定天數/CTA）
+const WEIGHT_ANALYSIS_DATES = ["07/24", "07/23", "07/22", "07/21", "07/20", "07/17", "07/16", "07/15", "07/14", "07/13", "07/09", "07/08", "07/07", "07/06", "07/03", "07/02", "07/01", "06/30", "06/29", "06/26", "06/25", "06/24", "06/23", "06/22", "06/18", "06/17", "06/16", "06/15", "06/12", "06/11", "06/10", "06/09", "06/08", "06/05", "06/04", "06/03", "06/02", "06/01", "05/29", "05/28", "05/27", "05/26", "05/25", "05/22", "05/21", "05/20", "05/19", "05/18", "05/15", "05/14", "05/13", "05/12", "05/11", "05/08", "05/07", "05/06", "05/05", "05/04", "04/30", "04/29", "04/28", "04/27", "04/24", "04/23", "04/22", "04/21", "04/20"];   // 新→舊
+const WALL_TOTAL_DAYS = 67;   // 動態牆總天數（Phase 2：非會員只有 free N 日時仍能算鎖定天數/CTA）
 
 const INDUSTRY_MAP = {
   '2330':'半導體','2303':'半導體','2454':'半導體','3711':'半導體',
@@ -4339,20 +4364,24 @@ const CONSENSUS_TAB_KEY = '__consensus__';
 let activeHistoryETF = CONSENSUS_TAB_KEY;                // 預設選共識
 let activeWeightDate = WEIGHT_ANALYSIS_DATES[0] || '';   // shifting 頁日期 button row 預設最新
 
-function renderHistoryWall(mode = '') {
+function renderHistoryWall(mode = '', opts = {}) {
   if (typeof WALL_DATA === 'undefined') return;   // 非 timeline 頁略過（#historyWall 雖隱藏仍存在，靠此防呆而非 container 檢查）
   const container = document.getElementById('historyWall');
   if (!container) return;
+  // 靜默補齊/校正用：保持當前捲動位置（skeleton 與真 group 同寬，右端可視位置不變），不回彈到最右、不播進場動畫。
+  const _keepScroll = !!opts.keepScroll;
+  const _prevScroll = container.scrollLeft;
   if (!WALL_DATA.length) {
     container.innerHTML = '<div class="wall-empty">暫無新增/移出紀錄</div>';
     return;
   }
 
-  // ★ 5 日過濾（無完整存取 = visitor / member_loading / expired）
+  // ★ 5 日過濾（無完整佈局存取 = visitor / member_loading / expired，或 auth 未 settle 且快取非會員）
+  // 用 _layoutFullAccess（含 localStorage 快取）而非 hasFullAccess，讓 auth settle 前就能以正確長度佈局。
   let visibleData = WALL_DATA;
   let hiddenCount = 0;
   let latest5Set = null;
-  if (!hasFullAccess()) {
+  if (!_layoutFullAccess()) {
     latest5Set = new Set(WALL_DATA.slice(0, 5).map(g => g.to_label));
     visibleData = WALL_DATA.filter(g => latest5Set.has(g.to_label));
     // Phase 2：非會員 WALL_DATA 只有 free N 日，用 inline 全量 WALL_TOTAL_DAYS 算真實鎖定天數（維持升級 CTA）
@@ -4369,7 +4398,7 @@ function renderHistoryWall(mode = '') {
 
   const visibleFollowUps = (e) => {
     const fu = e.follow_ups || [];
-    if (hasFullAccess()) return fu;
+    if (_layoutFullAccess()) return fu;
     return latest5Set ? fu.filter(f => latest5Set.has(f.date_label)) : [];
   };
 
@@ -4516,9 +4545,14 @@ function renderHistoryWall(mode = '') {
   const wallOffset   = hiddenCount > 0 ? 1 : 0;
   const totalGroups  = visibleData.length + wallOffset;
   // Newest group (highest display index) gets delay 0; older groups follow
-  const animStyle    = (displayIdx) => mode === 'rem'
-    ? ` style="animation: wall-group-in 0.3s ease both; animation-delay: ${(totalGroups - 1 - displayIdx) * 45}ms"`
-    : '';
+  // mode==='rem'：首次揭曉，rem 區塊（預設 opacity:0）用進場動畫浮現。
+  // mode==='add'：揭曉前 pre-load 渲染，rem 區塊維持預設 opacity:0（尚未揭曉，本就不應可見）。
+  // mode===''（新增）：靜默補齊/校正（此時必已揭曉過一次），rem 區塊直接給靜態 opacity:1，不重播動畫、不閃爍。
+  const animStyle    = (displayIdx) => {
+    if (mode === 'rem') return ` style="animation: wall-group-in 0.3s ease both; animation-delay: ${(totalGroups - 1 - displayIdx) * 45}ms"`;
+    if (mode === 'add') return '';
+    return ' style="opacity:1"';
+  };
   const addAnimStyle = (displayIdx) => mode === 'add'
     ? ` style="animation: wall-add-in 0.3s ease both; animation-delay: ${(totalGroups - 1 - displayIdx) * 45}ms"`
     : '';
@@ -4552,14 +4586,24 @@ function renderHistoryWall(mode = '') {
     </div>`;
   }).join('');
 
-  // ★ 狀態感知卡片（位於最舊的一側，視覺上在最左邊）
-  const lockedHtml = _renderTimelineLockCard(hiddenCount);
+  // ★ 最舊側（視覺最左）狀態卡：
+  //   會員佈局但完整資料未到（WALL_DATA 仍 free）→ skeleton 佔位欄，撐完整寬 + 滿載高（供 rAF 統一 maxGroupH），
+  //   等 _maybeLoadFull 取回完整資料後重繪原地換真卡；因在左端捲軸外，右端近 5 日不動 → 補齊無感。
+  //   其餘（非會員 / 會員完整已到）→ 既有鎖定/試用/升級卡。
+  const _fullPending = _layoutFullAccess() && WALL_DATA.length < WALL_TOTAL_DAYS;
+  const lockedHtml = _fullPending
+    ? _renderWallSkeleton(Math.max(0, WALL_TOTAL_DAYS - visibleData.length))
+    : _renderTimelineLockCard(hiddenCount);
 
   container.innerHTML = lockedHtml + groupsHtml;
   container._visibleData = visibleData;
   container._latest5Set = latest5Set;
   if (typeof window._syncHistoryWallThumb === 'function') window._syncHistoryWallThumb();
   if (typeof setupWallSearch === 'function') setupWallSearch();
+
+  // 同步立即定位（不等 rAF），避免 innerHTML 重建後 scrollLeft 歸零被瀏覽器 paint 到 → 消除「閃到最左再跳回」。
+  // 補齊/校正：保持補齊前位置；首次揭曉：貼右看最新。
+  container.scrollLeft = _keepScroll ? _prevScroll : container.scrollWidth;
 
   requestAnimationFrame(() => {
     const addSections = container.querySelectorAll('.wall-add-section');
@@ -4572,7 +4616,7 @@ function renderHistoryWall(mode = '') {
     groups.forEach(g => { g.style.minHeight = ''; maxGroupH = Math.max(maxGroupH, g.offsetHeight); });
     groups.forEach(g => { g.style.minHeight = maxGroupH + 'px'; });
 
-    container.scrollLeft = container.scrollWidth;
+    container.scrollLeft = _keepScroll ? _prevScroll : container.scrollWidth;
   });
 
   if (!container.dataset.expandBound) {
@@ -4881,6 +4925,13 @@ function setupWallSearch() {
 }
 
 function _renderShiftingLockBtn(hiddenCount, animStyle) {
+  if (!_authSettled) {
+    // auth 未 settle：快取會員 → 樂觀無鎖定鈕（日期列已由 _getShiftingVisibleDates 給全部）；
+    // 快取非會員 → visitor 登入鈕（與近 5 日一致）。auth settle 後 renderWeightDateRow 重繪校正。
+    if (_cachedFullAccess === true) return '';
+    return `<button class="weight-date-btn weight-date-btn-locked is-visitor"${animStyle}
+            onclick="if (typeof triggerLogin === 'function') triggerLogin()">🔒 Google登入</button>`;
+  }
   const s = getTrialState();
   if (s.state === 'paid' || s.state === 'member_loading') return '';
   if (s.state === 'trial') {
@@ -4899,6 +4950,25 @@ function _renderShiftingLockBtn(hiddenCount, animStyle) {
             title="試用已結束 · 更早 ${hiddenCount} 個交易日僅 Founder/Pro 可見">🔒 +${hiddenCount}</button>`;
   }
   return '';
+}
+
+// 動態牆左端 skeleton 佔位欄（會員佈局但完整資料 getFullData 未到時用）：
+// 撐完整寬（每欄 350px）+ 滿載高（模擬日期 + 數張卡片高度的灰塊），供尾端 rAF 把所有 wall-group 統一到 maxGroupH。
+// 讓「即時揭曉」的容器高度 ≈ 完整資料最終高度，補真卡時既不撐寬也不撐高 → 縱向無跳動。
+function _renderWallSkeleton(count) {
+  if (!(count > 0)) return '';
+  // 每欄模擬「滿載 group」（日期 + 約 5 張 add 卡 + 分隔 + 日期 + 約 5 張 rem 卡），
+  // 讓自然高度貼近完整資料最高欄；尾端 rAF 再把所有欄統一到 maxGroupH。
+  const card = '<div class="wall-sk-line wall-sk-card"></div>';
+  const col = `
+    <div class="wall-group wall-group-skeleton" aria-hidden="true">
+      <div class="wall-sk-line wall-sk-date"></div>
+      ${card.repeat(5)}
+      <hr class="wall-inner-sep" style="opacity:.2">
+      <div class="wall-sk-line wall-sk-date"></div>
+      ${card.repeat(5)}
+    </div>`;
+  return col.repeat(count);
 }
 
 function _renderTimelineLockCard(hiddenCount) {
@@ -4954,15 +5024,19 @@ function _changeMatchesActiveDate(change) {
 }
 
 // Computes visible dates for current tier (already reversed: 舊→新)
+// 用 _layoutFullAccess（含 localStorage 快取）→ auth settle 前就能以正確身份給出全部/近5日日期。
+// 日期 label 全來自 inline WEIGHT_ANALYSIS_DATES（非機密），故會員版即時可得、不需 getFullData。
 function _getShiftingVisibleDates() {
-  if (hasFullAccess()) return [...WEIGHT_ANALYSIS_DATES].reverse();
+  if (_layoutFullAccess()) return [...WEIGHT_ANALYSIS_DATES].reverse();
   const latest5Set = new Set(WEIGHT_ANALYSIS_DATES.slice(0, 5));
   return [...WEIGHT_ANALYSIS_DATES].reverse().filter(d => latest5Set.has(d));
 }
 
-function renderWeightDateRow(animate = false) {
+function renderWeightDateRow(animate = false, opts = {}) {
   const container = document.getElementById('weightDateRow');
   if (!container) return;
+  // 靜默補齊/校正用：保持補齊前捲動位置，不回彈到最左（同 renderHistoryWall 的 keepScroll 邏輯）。
+  const _prevScroll = container.scrollLeft;
   const visibleDates = _getShiftingVisibleDates();
   const hiddenCount  = WEIGHT_ANALYSIS_DATES.length - visibleDates.length;
 
@@ -4985,6 +5059,8 @@ function renderWeightDateRow(animate = false) {
     return `<button class="weight-date-btn ${d === activeWeightDate ? 'active' : ''}${isUnlocked ? ' is-trial-unlocked' : ''}"${animStyle(i + offset)}
             onclick="selectWeightDate('${d}')"${isUnlocked ? ' title="試用期短暫解鎖"' : ''}>${d}</button>`;
   }).join('');
+  // 靜默補齊/校正：保持日期列捲動位置，避免 innerHTML 重建歸零後跳到最左（首次揭曉由 _revealGatedOnce 貼右）。
+  if (opts.keepScroll) container.scrollLeft = _prevScroll;
 }
 
 function scrollWeightDateRow(direction) {
@@ -5494,6 +5570,18 @@ function hasFullAccess() {
   return s.state === 'paid' || s.state === 'trial';
 }
 
+// 佈局用身份：auth 已 settle → 真實 hasFullAccess()；未 settle → localStorage 快取（開頁即時撐長度／揭曉）。
+// 僅供「牆／日期列該顯示幾天、要不要 skeleton 佔位」的版面決策，絕不用於權限或取完整資料（那些仍走 hasFullAccess + getFullData 後端驗身分）。
+function _layoutFullAccess() {
+  return _authSettled ? hasFullAccess() : (_cachedFullAccess === true);
+}
+
+// auth settle 後把真實身份寫入快取，供下次開頁即時佈局。
+function _writeAccessCache(v) {
+  _cachedFullAccess = !!v;
+  try { localStorage.setItem('etfcross_access_cache', v ? '1' : '0'); } catch (e) {}
+}
+
 function getTrackingLimit() {
   if (hasFullAccess()) return PORTFOLIO_LIMIT_PAID;
   const tier = getUserTier();
@@ -5923,15 +6011,15 @@ document.addEventListener('click', e => {
 })();
 
 // ── access-gated 區塊（timeline 牆 / shifting 日期列）協調揭曉 ──
-// 這兩區內容長度隨會員身份不同（訪客近 5 日 / 會員全部）。若「資料到就先渲染訪客版、auth 到再展開全部」會跳屏，
-// 故保持其載入中（牆 is-locked 隱藏內容 + spinner、日期列 pre-load 隱藏），等「資料 + 會員身份」都就緒才一次以正確權限揭曉。
-// _authSettled 只由真實 firebase onAuthChanged（或逾時 fallback）設定，不可由資料回調假設，否則又會先揭訪客再展開。
+// 這兩區內容長度隨會員身份不同（訪客近 5 日 / 會員全部）。原本「等身份＋完整資料全到才一次揭曉」會慢到 3–4s。
+// 改為：free 資料一到即揭曉，並用 _layoutFullAccess（localStorage 快取／樂觀）以「該身份的最終長度」佈局——
+// 會員撐完整寬高（右端 free 近 5 日真卡 + 左端 skeleton 佔位欄），非會員 5 日版。auth settle 後 onAuthChanged 校正重繪、
+// getFullData 回來 _maybeLoadFull 原地把左端 skeleton 換真卡。補齊/校正都在左端捲軸外，右端近 5 日不動 → 無感。
 // （旗標 _pageDataReady / _authSettled / _gatedRevealed 宣告於頂層）
 function _revealGatedOnce() {
-  // 需資料(free) + 會員身份 + 完整資料階段都就緒才揭曉（會員：等 getFullData；非會員：_fullReady 立即真）
-  if (_gatedRevealed || !_pageDataReady || !_authSettled || !_fullReady) return;
+  // 只等 free 資料到即揭曉；身份用 _layoutFullAccess 即時佈局，不再等 auth／getFullData。
+  if (_gatedRevealed || !_pageDataReady) return;
   _gatedRevealed = true;
-  // 此刻 hasFullAccess() 已反映正確會員身份 → 一次渲染正確長度後揭曉。
   // 用 'rem' 模式：removed section（.wall-rem-section 預設 opacity:0）靠此模式的進場動畫浮現，
   // 若用 'add' 會讓移出持倉停在 opacity:0 而消失（原本 onAuthChanged 即以 'rem' 作最終渲染）。
   if (typeof renderHistoryWall === 'function') renderHistoryWall('rem');
@@ -5964,8 +6052,12 @@ async function _maybeLoadFull() {
         else if (k === 'wall')      WALL_DATA = v;
         else if (k === 'consensus') CONSENSUS_BY_DATE = v;
       }
+      // 完整資料覆蓋 free 後，原地重繪 gated 區：牆左端 skeleton → 真卡、日期列補齊舊日期。
+      // mode=''（靜默）+ keepScroll：不重播進場動畫、不回彈捲動位置，補齊發生在左端捲軸外、右端近 5 日不動 → 無感。
+      if (typeof renderHistoryWall === 'function') renderHistoryWall('', { keepScroll: true });
+      if (typeof renderWeightDateRow === 'function') renderWeightDateRow(false, { keepScroll: true });
       // 只在本頁確實載入了 shifting 資料時才重繪其內容（timeline 頁只有 wall，無 HISTORY_DATA，
-      // 呼叫 renderHistoryETFTabs 會對 undefined.map 崩）。gated 區（牆/日期列）由 _revealGatedOnce 一次揭曉。
+      // 呼叫 renderHistoryETFTabs 會對 undefined.map 崩）。
       if (gatedKeys.includes('history') || gatedKeys.includes('consensus')) {
         if (typeof renderHistoryETFTabs === 'function') renderHistoryETFTabs();
         if (typeof renderHistoryContent === 'function') renderHistoryContent();
@@ -5982,20 +6074,32 @@ async function _maybeLoadFull() {
 // Called by Firebase module when auth state changes; re-renders cards + modal（會員身份自然切換）
 window.onAuthChanged = () => {
   _authSettled = true;
+  _writeAccessCache(hasFullAccess());   // 記真實身份，供下次開頁即時佈局
   renderETFCards();
   renderModalChips();
   if (typeof renderUpgradeButtons === 'function') renderUpgradeButtons();
-  // gated 揭曉前，牆於 is-locked（不可見）下渲染；揭曉後為正常重繪（登入/登出即時切換）
-  if (typeof renderHistoryWall === 'function') renderHistoryWall('rem');
-  if (typeof renderWeightDateRow === 'function') renderWeightDateRow(true);
+  // auth settle 校正重繪：若先前用快取／樂觀身份佈局與真實不符，此處撐開/收合。
+  // mode=''（靜默）+ keepScroll：差異都在左端捲軸外、右端近 5 日不動 → 校正無感。
+  if (typeof renderHistoryWall === 'function') renderHistoryWall('', { keepScroll: true });
+  if (typeof renderWeightDateRow === 'function') renderWeightDateRow(false, { keepScroll: true });
   // auth-area（登入區）自然揭曉，不等資料
   const authAreaContainer = document.querySelector('.auth-area');
   if (authAreaContainer) { authAreaContainer.style.opacity = '1'; authAreaContainer.style.transform = 'translateX(0)'; }
-  _maybeLoadFull();
+  _revealGatedOnce();   // 若 auth 早於資料到，資料到時才揭曉；此處補一次以防順序反轉
+  _maybeLoadFull();     // 真實會員 → 背景取完整資料，回來後原地補左端 skeleton
 };
 
-// firebase SDK 載入失敗（gstatic 被擋等）時不讓牆/日期列永久卡載入中：逾時視為訪客揭曉
-setTimeout(() => { if (!_authSettled) { _authSettled = true; _maybeLoadFull(); } }, 3500);
+// firebase SDK 載入失敗（gstatic 被擋等）時不讓身份永久停在快取／樂觀值：逾時視為訪客 settle + 校正。
+// 揭曉已不依賴此逾時（改由 free 資料到即揭），此處只補「auth 永遠不來」時的身份校正與快取歸零。
+setTimeout(() => {
+  if (!_authSettled) {
+    _authSettled = true;
+    _writeAccessCache(false);
+    if (typeof renderHistoryWall === 'function') renderHistoryWall('', { keepScroll: true });
+    if (typeof renderWeightDateRow === 'function') renderWeightDateRow(false, { keepScroll: true });
+    _maybeLoadFull();
+  }
+}, 3500);
 
 // Build code→name/industry lookup once
 const STOCK_NAME = {};
@@ -6329,7 +6433,8 @@ loadPageData().then(() => {
   // 這兩區於 is-locked / pre-load 下渲染（不可見），待 _revealGatedOnce 於 auth 也就緒後一次揭曉
   renderHistoryWall('add');
   _pageDataReady = true;
-  _maybeLoadFull();   // auth 已 settled 且為會員 → 取完整版再展開；否則（非會員/等 auth）走各自路徑
+  _revealGatedOnce();  // free 資料到即揭曉（身份用 _layoutFullAccess 快取/樂觀佈局），不等 auth/getFullData
+  _maybeLoadFull();    // auth 已 settled 且為會員 → 背景取完整版原地補左端；否則走各自路徑
 }).catch(err => {
   console.error('[loadPageData] 資料載入失敗', err);
   // 別讓「載入中」骨架永遠轉：收掉並改顯示錯誤 + 重試
@@ -6347,7 +6452,7 @@ loadPageData().then(() => {
 // INTRO: ParticleNetwork Canvas + Sequence Controller
 // (Inlined from etfdev/docs_dev/etfdev-brain-intro.js)
 // ────────────────────────────────────────────────────────────────────────────
-const INTRO_DATA_POINTS = '164,934';
+const INTRO_DATA_POINTS = '174,468';
 
 // etfdev-brain-intro.js
 // Particle Network canvas animation + Intro sequence controller
@@ -6675,7 +6780,7 @@ function wait(ms) {
 
 // ── Intro cards: 隨機填入主動式 ETF 資料 ──
 (function() {
-  const etfs = [{"ticker": "00981A", "name": "主動統一台股增長", "aum": "2,508 億", "price": 25.85, "holdings": 50, "added": 0, "removed": 0, "changed": 4, "date": "07/20"}, {"ticker": "00403A", "name": "主動統一升級50", "aum": "1,557 億", "price": 9.26, "holdings": 50, "added": 0, "removed": 0, "changed": 8, "date": "07/20"}, {"ticker": "00991A", "name": "主動復華未來50", "aum": "729 億", "price": 16.44, "holdings": 50, "added": 0, "removed": 0, "changed": 8, "date": "07/20"}, {"ticker": "00988A", "name": "主動統一全球創新", "aum": "553 億", "price": 16.63, "holdings": 11, "added": 0, "removed": 0, "changed": 2, "date": "07/20"}, {"ticker": "00982A", "name": "主動群益台灣強棒", "aum": "464 億", "price": 21.04, "holdings": 54, "added": 1, "removed": 0, "changed": 38, "date": "07/20"}, {"ticker": "00990A", "name": "主動元大AI新經濟", "aum": "387 億", "price": 15.79, "holdings": 12, "added": 0, "removed": 0, "changed": 0, "date": "07/20"}, {"ticker": "00992A", "name": "主動群益科技創新", "aum": "360 億", "price": 14.87, "holdings": 37, "added": 0, "removed": 0, "changed": 1, "date": "07/20"}, {"ticker": "00400A", "name": "主動國泰動能高息", "aum": "245 億", "price": 12.7, "holdings": 57, "added": 0, "removed": 0, "changed": 0, "date": "07/20"}];
+  const etfs = [{"ticker": "00981A", "name": "主動統一台股增長", "aum": "2,673 億", "price": 27.45, "holdings": 51, "added": 1, "removed": 0, "changed": 0, "date": "07/24"}, {"ticker": "00403A", "name": "主動統一升級50", "aum": "1,621 億", "price": 9.59, "holdings": 50, "added": 0, "removed": 0, "changed": 3, "date": "07/24"}, {"ticker": "00991A", "name": "主動復華未來50", "aum": "739 億", "price": 16.39, "holdings": 50, "added": 1, "removed": 1, "changed": 1, "date": "07/24"}, {"ticker": "00988A", "name": "主動統一全球創新", "aum": "596 億", "price": 17.74, "holdings": 11, "added": 0, "removed": 0, "changed": 2, "date": "07/24"}, {"ticker": "00982A", "name": "主動群益台灣強棒", "aum": "481 億", "price": 21.86, "holdings": 55, "added": 1, "removed": 0, "changed": 1, "date": "07/24"}, {"ticker": "00990A", "name": "主動元大AI新經濟", "aum": "415 億", "price": 16.76, "holdings": 11, "added": 0, "removed": 0, "changed": 0, "date": "07/24"}, {"ticker": "00992A", "name": "主動群益科技創新", "aum": "379 億", "price": 15.61, "holdings": 38, "added": 2, "removed": 0, "changed": 3, "date": "07/24"}, {"ticker": "00400A", "name": "主動國泰動能高息", "aum": "262 億", "price": 13.38, "holdings": 56, "added": 0, "removed": 0, "changed": 0, "date": "07/24"}];
   if (!etfs.length) return;
 
   // Fisher-Yates shuffle
