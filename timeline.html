@@ -966,12 +966,25 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .expand-card {
+    position: relative;
     background: var(--bg2);
     border: 1px solid var(--border);
     border-left: 3px solid var(--ec-color, var(--accent));
     border-radius: 8px;
     padding: 12px 14px;
   }
+  .ec-delta-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .ec-delta-up   { color: var(--red); }
+  .ec-delta-down { color: var(--green); }
+  .ec-delta-flat { color: var(--text); }
   .ec-ticker {
     font-family: var(--mono);
     font-size: 12px;
@@ -3585,7 +3598,7 @@
       <button class="tos-tab-btn" data-tos-tab="tos-terms">使用條款</button>
     </div>
     <div class="tos-body" id="tosBody">
-      <section id="tos-ann"><div class="tos-ann-icon">🆕</div><div class="tos-ann-title">異動歷史新增被動式 ETF</div><div class="tos-ann-body"><p>「主被動 ETF 異動歷史」新增<b>被動式 ETF</b> 資訊！在有指數成分股調整的日期卡上，點擊右上角的<b>「被動式ETF」</b>按鈕，即可向右展開查看 0050、0056、006208、0052 等被動式 ETF 當日的成分股<b>新增入列</b>與<b>移出持倉</b>。</p>
+      <section id="tos-ann"><div class="tos-ann-icon">🆕</div><div class="tos-ann-title">交集表新增張數增減區間</div><div class="tos-ann-body"><p>「交集表」新增<b>張數增減區間</b>功能！展開任一成分股列後，可從搜尋框右側選擇 5、10、15、20、25、30 天的比較區間，每張 ETF 卡片右上角即會顯示該區間的張數變化：<b>紅色</b>代表加碼、<b>綠色</b>代表減碼、<b>白色</b>代表無變化。</p>
 <p>-</p>
 <p>為了給您更精準的<b>視覺化分析</b>，我們每日收錄公開數據後，需經人工與系統多次驗證，並於 <b>當日收盤後更新</b>，遇資料異常時將暫沿用前期數據。<b>本站數據僅供參考，請以官方最新公告為準</b>。</p></div></section>
       <section id="tos-privacy">
@@ -3751,6 +3764,16 @@
       <option value="5">5 張卡片</option>
     </select>
     <input type="text" id="search" placeholder="搜尋代號或名稱...">
+    <label>張數增減區間：</label>
+    <select id="sharesInterval">
+      <option value="0">不顯示</option>
+      <option value="5" selected>5 天</option>
+      <option value="10">10 天</option>
+      <option value="15">15 天</option>
+      <option value="20">20 天</option>
+      <option value="25">25 天</option>
+      <option value="30">30 天</option>
+    </select>
   </div>
 
   <div class="table-wrap">
@@ -4085,8 +4108,10 @@ function formatCapital(yi) {
 
 // ── Table rendering ───────────────────────────────────────────────────────
 let expandedRow = null;
+let expandedTicker = null;
 let activeFilters = new Set();
 let activeGroupIdx = 0;
+let sharesIntervalDays = 5;
 
 function parseAum(str) {
   return parseFloat(str.replace(/,/g, '').replace('億', '').trim()) || 0;
@@ -4147,6 +4172,7 @@ function renderTable() {
   if (typeof CROSS_DATA === 'undefined') return;   // 非 index 頁略過
   const tbody = document.getElementById('tableBody');
   expandedRow = null;
+  expandedTicker = null;
 
   const minCovCheck = parseInt(document.getElementById('minCoverage').value);
   const activeCount = activeFilters.size;
@@ -4201,6 +4227,7 @@ function renderTable() {
   }).join('');
 
   expandedRow = null;
+  expandedTicker = null;
   renderStats(rows);
 
   document.querySelectorAll('thead th[data-col]').forEach(th => {
@@ -4211,6 +4238,32 @@ function renderTable() {
   });
 }
 
+function buildExpandCardsHtml(visibleEtfs) {
+  return visibleEtfs.map(e => {
+    const delta = sharesIntervalDays > 0 ? (e.shares_delta || {})[String(sharesIntervalDays)] : null;
+    const hasDelta = delta !== null && delta !== undefined;
+    let deltaBadge = '';
+    if (delta === 0) {
+      deltaBadge = `<div class="ec-delta-badge ec-delta-flat" title="近 ${sharesIntervalDays} 個交易日張數變化">0張</div>`;
+    } else if (hasDelta) {
+      const cls  = delta > 0 ? 'ec-delta-up' : 'ec-delta-down';
+      const arr  = delta > 0 ? '▲' : '▼';
+      const sign = delta > 0 ? '+' : '';
+      deltaBadge = `<div class="ec-delta-badge ${cls}" title="近 ${sharesIntervalDays} 個交易日張數變化">${arr} ${sign}${delta.toLocaleString()}張</div>`;
+    }
+    return `
+    <div class="expand-card" style="--ec-color:${e.color}">
+      ${deltaBadge}
+      <div class="ec-ticker">${e.etf_ticker}</div>
+      <div class="ec-name">${e.etf_name}</div>
+      <div class="ec-row"><span>權重</span><span class="ec-val">${e.weight.toFixed(2)}%</span></div>
+      <div class="ec-row"><span>資金</span><span class="ec-val">${e.capital_yi} 億</span></div>
+      ${e.shares ? `<div class="ec-row"><span>張數</span><span class="ec-val">${Math.round(e.shares/1000).toLocaleString()} 張</span></div>` : ''}
+    </div>
+  `;
+  }).join('');
+}
+
 function toggleExpand(idx, ticker) {
   const expandTr = document.getElementById(`expand-${idx}`);
   const mainTr   = expandTr.previousElementSibling;
@@ -4219,6 +4272,7 @@ function toggleExpand(idx, ticker) {
     expandTr.style.display = 'none';
     mainTr.classList.remove('expanded');
     expandedRow = null;
+    expandedTicker = null;
     return;
   }
 
@@ -4234,20 +4288,24 @@ function toggleExpand(idx, ticker) {
   if (!row) return;
 
   const visibleEtfs = activeFilters.size > 0 ? row.etfs.filter(e => activeFilters.has(e.etf_ticker)) : row.etfs;
-  const inner = visibleEtfs.map(e => `
-    <div class="expand-card" style="--ec-color:${e.color}">
-      <div class="ec-ticker">${e.etf_ticker}</div>
-      <div class="ec-name">${e.etf_name}</div>
-      <div class="ec-row"><span>權重</span><span class="ec-val">${e.weight.toFixed(2)}%</span></div>
-      <div class="ec-row"><span>資金</span><span class="ec-val">${e.capital_yi} 億</span></div>
-      ${e.shares ? `<div class="ec-row"><span>張數</span><span class="ec-val">${Math.round(e.shares/1000).toLocaleString()} 張</span></div>` : ''}
-    </div>
-  `).join('');
-
-  expandTr.querySelector('td').innerHTML = `<div class="expand-inner">${inner}</div>`;
+  expandTr.querySelector('td').innerHTML = `<div class="expand-inner">${buildExpandCardsHtml(visibleEtfs)}</div>`;
   expandTr.style.display = '';
   mainTr.classList.add('expanded');
   expandedRow = idx;
+  expandedTicker = ticker;
+}
+
+function refreshExpandedCards() {
+  if (expandedRow === null || expandedTicker === null) return;
+  const expandTr = document.getElementById(`expand-${expandedRow}`);
+  const inner = expandTr && expandTr.querySelector('.expand-inner');
+  if (!inner) return;
+
+  const row = CROSS_DATA.find(r => r.ticker === expandedTicker);
+  if (!row) return;
+
+  const visibleEtfs = activeFilters.size > 0 ? row.etfs.filter(e => activeFilters.has(e.etf_ticker)) : row.etfs;
+  inner.innerHTML = buildExpandCardsHtml(visibleEtfs);
 }
 
 // ── AI 分析報表 ────────────────────────────────────────────────────────────
@@ -4355,6 +4413,10 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
 
 document.getElementById('minCoverage').addEventListener('change', renderTable);
 document.getElementById('search').addEventListener('input', renderTable);
+document.getElementById('sharesInterval').addEventListener('change', (e) => {
+  sharesIntervalDays = parseInt(e.target.value) || 0;
+  refreshExpandedCards();
+});
 
 // ══════════════════════════════════════════════════════════════════════════
 // History page
@@ -6942,7 +7004,7 @@ if (!document.documentElement.classList.contains('intro-seen')) {
   const MAX_NOTES      = 15;
   const TOS_VERSION        = 'v1';
   const TOS_FORCE_REACCEPT = false;
-  const ANN_VERSION        = '20260702-passive-etf-timeline';
+  const ANN_VERSION        = '20260725-shares-delta-interval';
 
   let currentUser    = null;
   let unsubNotes     = null;
