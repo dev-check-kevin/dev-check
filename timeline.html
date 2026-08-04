@@ -6089,7 +6089,12 @@ function _revealGatedOnce() {
   const historyWall = document.getElementById('historyWall');
   if (historyWall) historyWall.classList.remove('is-locked');
   const wallLockIndicator = document.getElementById('wallLockIndicator');
-  if (wallLockIndicator) wallLockIndicator.style.display = 'none';
+  // 會員等 getFullData 完整資料時，左端走 _renderWallSkeleton 佔位欄（無文字），
+  // 故此處不無條件隱藏 spinner：會員且完整資料未到 → 保留顯示。
+  // 隱藏由 _maybeLoadFull 負責（本函式有 _gatedRevealed early-return，只跑一次，不能靠再次呼叫收掉）。
+  // 非會員 _layoutFullAccess() 為假 → 一到即隱藏（現況不變）。
+  const _stillPendingFull = _layoutFullAccess() && typeof WALL_DATA !== 'undefined' && WALL_DATA.length < WALL_TOTAL_DAYS;
+  if (wallLockIndicator) wallLockIndicator.style.display = _stillPendingFull ? '' : 'none';
   if (window._wallLockTimeoutId) { clearTimeout(window._wallLockTimeoutId); window._wallLockTimeoutId = null; }
   const weightDateRow = document.getElementById('weightDateRow');
   if (weightDateRow) { weightDateRow.classList.remove('pre-load'); weightDateRow.style.opacity = '1'; weightDateRow.scrollLeft = weightDateRow.scrollWidth; }
@@ -6125,9 +6130,17 @@ async function _maybeLoadFull() {
         if (typeof renderHistoryContent === 'function') renderHistoryContent();
         if (typeof updateHistoryDesc === 'function') updateHistoryDesc();
       }
+      // 完整資料已補上（skeleton 換真卡）→ 隱藏會員等待期間的 spinner
+      const wallLockIndicator = document.getElementById('wallLockIndicator');
+      if (wallLockIndicator) wallLockIndicator.style.display = 'none';
     } catch (e) {
       console.warn('[getFullData] 取得完整資料失敗，停留在 free 版', e);
+      // 失敗：spinner 維持顯示（永久轉圈，屬失敗處理範疇，本次不處理、另案 change）
     }
+  } else {
+    // 非會員 / 無完整可載：沒有完整資料要等 → 隱藏 spinner（含樂觀誤判為會員後的校正）
+    const wallLockIndicator = document.getElementById('wallLockIndicator');
+    if (wallLockIndicator) wallLockIndicator.style.display = 'none';
   }
   _fullReady = true;
   _revealGatedOnce();
